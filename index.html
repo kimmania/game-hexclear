@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hex Clear" />
+    <meta name="theme-color" content="#1a2332" />
+    <meta
+      name="description"
+      content="Slide colorful hex tiles off the board in the right order."
+    />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <title>Hex Clear</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <div>
+          <h1 class="title">Hex Clear</h1>
+          <button type="button" id="level-meta" class="level-meta level-meta-btn">
+            Level 1
+          </button>
+        </div>
+        <div class="header-actions">
+          <span id="status-chip" class="status-chip" data-variant="playing">Playing</span>
+        </div>
+      </header>
+
+      <p id="continue-banner" class="continue-banner hidden" role="status"></p>
+      <p id="level-title" class="level-title">Loading…</p>
+      <p id="hint" class="hint" aria-live="polite">Tap a hex to slide it off the board.</p>
+
+      <main class="game-area">
+        <div id="board-host" class="board-host"></div>
+      </main>
+
+      <div id="win-banner" class="win-banner hidden" role="status">Level cleared!</div>
+
+      <footer class="controls" aria-label="Game controls">
+        <button type="button" id="prev-level" class="btn" disabled>Prev</button>
+        <button type="button" id="levels-btn" class="btn">Levels</button>
+        <button type="button" id="undo" class="btn" disabled>Undo</button>
+        <button type="button" id="restart" class="btn btn-primary">Restart</button>
+        <button type="button" id="next-level" class="btn" disabled>Next</button>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

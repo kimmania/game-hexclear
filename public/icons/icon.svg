@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hex Clear">
+  <rect width="512" height="512" rx="96" fill="#1a2332"/>
+  <polygon
+    points="368.6,191 368.6,321 256,386 143.4,321 143.4,191 256,126"
+    fill="#5eb8ff"
+    stroke="#3d9ae8"
+    stroke-width="14"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 164 220 L 248 220 L 248 176 L 348 256 L 248 336 L 248 292 L 164 292 Z"
+    fill="#ffffff"
+  />
+</svg>

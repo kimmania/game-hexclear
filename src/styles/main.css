@@ -1,0 +1,363 @@
+:root {
+  --bg: #1a2332;
+  --surface: #243044;
+  --board: #2a3850;
+  --cell: #33435e;
+  --cell-edge: #445572;
+  --text: #eef3fb;
+  --text-muted: #9aadc4;
+  --accent: #5eb8ff;
+  --accent-soft: rgba(94, 184, 255, 0.25);
+  --win: #5fd4a4;
+  --danger: #ff7b6b;
+  --radius: 10px;
+  --btn-min: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  touch-action: manipulation;
+  padding:
+    calc(10px + var(--safe-top))
+    calc(10px + var(--safe-right))
+    calc(10px + var(--safe-bottom))
+    calc(10px + var(--safe-left));
+}
+
+#app {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: calc(100dvh - 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.level-meta-btn {
+  display: block;
+  margin: 4px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.status-chip {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface);
+}
+
+.status-chip[data-variant='won'] {
+  background: rgba(95, 212, 164, 0.2);
+  color: var(--win);
+}
+
+.continue-banner,
+.level-title,
+.hint {
+  margin: 0;
+}
+
+.level-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.continue-banner {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-size: 0.85rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.game-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.board-host {
+  width: 100%;
+  max-width: 400px;
+}
+
+.hex-board {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.hex-cell {
+  fill: var(--cell);
+  stroke: var(--cell-edge);
+  stroke-width: 1.5;
+}
+
+.hex-wall {
+  fill: #1f2838;
+  stroke: #0f1520;
+  stroke-width: 2;
+}
+
+.hex-tile {
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.hex-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.hex-tile-blocked {
+  filter: saturate(0.75);
+}
+
+.hex-tile-shake {
+  animation: hex-shake 0.35s ease;
+}
+
+@keyframes hex-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.btn {
+  min-height: var(--btn-min);
+  padding: 8px 6px;
+  border: 1px solid var(--cell-edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #102033;
+}
+
+.win-banner {
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: rgba(95, 212, 164, 0.15);
+  color: var(--win);
+  font-weight: 700;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 14, 22, 0.72);
+}
+
+.modal-panel {
+  width: min(100%, 360px);
+  max-height: min(80dvh, 520px);
+  overflow: auto;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.level-legend {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.level-cell {
+  position: relative;
+  min-height: 52px;
+  border: 2px solid var(--cell-edge);
+  border-radius: var(--radius);
+  background: var(--board);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.level-cell-current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+.level-cell-completed {
+  border-color: rgba(95, 212, 164, 0.5);
+}
+
+.level-cell-locked {
+  opacity: 0.45;
+}
+
+.level-cell-num {
+  font-weight: 700;
+}
+
+.level-cell-mark {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.7rem;
+}
+
+.modal-close {
+  width: 100%;
+}
+
+.install-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-size: 0.82rem;
+}
+
+.install-hint-text {
+  margin: 0;
+  flex: 1;
+}
+
+.install-hint-dismiss {
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.sw-update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(12px + var(--safe-bottom));
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font-size: 0.85rem;
+}
+
+.sw-update-reload {
+  min-height: 36px;
+  padding: 6px 12px;
+}
+
+@media (max-width: 380px) {
+  .controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #restart {
+    grid-column: span 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hex-tile-shake {
+    animation: none;
+  }
+}
