@@ -4,6 +4,7 @@ import {
   createGameState,
   hintForBlockReason,
   isWin,
+  recordMove,
   resetGameState,
   statusLabel,
   tilesRemaining,
@@ -12,7 +13,6 @@ import { fetchLevel, fetchLevelIndex } from './core/levels';
 import type { GameState, LevelDef, TileId } from './core/types';
 import { configureAudio, playSound, primeAudio } from './game/audio';
 import { pulseHaptic } from './game/haptics';
-import { applySnapshot, captureSnapshot, type MoveSnapshot } from './game/history';
 import { loadSettings, saveSettings, type GameSettings } from './game/settings';
 import {
   clearSession,
@@ -35,7 +35,6 @@ import {
   setNextEnabled,
   setPrevEnabled,
   setStatusChip,
-  setUndoEnabled,
   showWinBanner,
   updateHeader,
 } from './ui/controls';
@@ -51,7 +50,6 @@ export class HexClearApp {
   private settings = loadSettings();
   private loading = false;
   private busy = false;
-  private undoSnapshot: MoveSnapshot | null = null;
   private board = createHexBoard(
     document.getElementById('board-host')!,
     (tileId) => void this.handleTileTap(tileId),
@@ -65,12 +63,10 @@ export class HexClearApp {
       onRestart: () => this.handleRestart(),
       onNext: () => void this.goToLevel(this.getCurrentLevelId() + 1),
       onPrev: () => void this.goToLevel(this.getCurrentLevelId() - 1),
-      onUndo: () => this.handleUndo(),
       onLevels: () => this.openLevels(),
       onSettings: () => this.openSettings(),
     });
 
-    document.addEventListener('keydown', (event) => this.handleKeydown(event));
     document.getElementById('level-meta')?.addEventListener('click', () => this.openLevels());
     document.body.addEventListener('pointerdown', () => primeAudio(), { once: true });
 
@@ -95,8 +91,6 @@ export class HexClearApp {
     if (!this.levelIds.includes(levelId)) return;
 
     this.loading = true;
-    this.undoSnapshot = null;
-    setUndoEnabled(false);
     showWinBanner(false);
 
     try {
@@ -191,6 +185,9 @@ export class HexClearApp {
 
     const result = canSlideTile(this.state, tileId);
     if (!result.ok) {
+      this.state = recordMove(this.state);
+      this.persistSession();
+      this.syncChrome();
       this.board.flashBlocked(tileId);
       playSound('blocked');
       pulseHaptic([12, 40, 12]);
@@ -199,8 +196,6 @@ export class HexClearApp {
     }
 
     this.busy = true;
-    this.undoSnapshot = captureSnapshot(this.state);
-    setUndoEnabled(true);
 
     await this.board.animateSlide(this.state, tileId, result.path);
     this.state = applySlide(this.state, tileId);
@@ -233,23 +228,9 @@ export class HexClearApp {
 
   private handleRestart(): void {
     if (!this.levelDef || this.busy) return;
-    this.undoSnapshot = null;
-    setUndoEnabled(false);
     this.state = resetGameState(this.levelDef);
     clearSession(this.state.levelId);
     this.board.render(this.state);
-    this.syncChrome();
-    setHint('Tap a hex to slide it off the board.');
-    showWinBanner(false);
-  }
-
-  private handleUndo(): void {
-    if (!this.undoSnapshot || this.busy) return;
-    this.state = applySnapshot(this.undoSnapshot);
-    this.undoSnapshot = null;
-    setUndoEnabled(false);
-    this.board.render(this.state);
-    this.persistSession();
     this.syncChrome();
     setHint('Tap a hex to slide it off the board.');
     showWinBanner(false);
@@ -290,13 +271,6 @@ export class HexClearApp {
     saveSettings(settings);
     configureAudio(settings);
     applyMotionClass(settings.reducedMotion);
-  }
-
-  private handleKeydown(event: KeyboardEvent): void {
-    if (event.key === 'z' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      this.handleUndo();
-    }
   }
 }
 

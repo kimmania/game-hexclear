@@ -102,6 +102,10 @@ export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
   return { ok: true, path };
 }
 
+export function recordMove(state: GameState): GameState {
+  return { ...state, moveCount: state.moveCount + 1 };
+}
+
 export function applySlide(state: GameState, tileId: TileId): GameState {
   const result = canSlideTile(state, tileId);
   if (!result.ok) {
@@ -110,7 +114,6 @@ export function applySlide(state: GameState, tileId: TileId): GameState {
 
   const next: GameState = {
     ...state,
-    moveCount: state.moveCount + 1,
     tiles: state.tiles.filter((tile) => tile.id !== tileId),
   };
 
@@ -118,7 +121,7 @@ export function applySlide(state: GameState, tileId: TileId): GameState {
     next.status = 'won';
   }
 
-  return next;
+  return recordMove(next);
 }
 
 export function isWin(state: GameState): boolean {

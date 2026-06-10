@@ -1,7 +1,6 @@
 {
   "id": 17,
-  "name": "Ice lock",
-  "par": 7,
+  "name": "Grand clear",
   "cells": [
     {
       "q": 0,
@@ -25,11 +24,19 @@
     },
     {
       "q": 1,
-      "r": -1
+      "r": 1
     },
     {
       "q": -1,
       "r": 1
+    },
+    {
+      "q": 1,
+      "r": -1
+    },
+    {
+      "q": -1,
+      "r": -1
     },
     {
       "q": 2,
@@ -39,45 +46,44 @@
   "tiles": [
     {
       "id": "t1",
-      "q": 0,
+      "q": 2,
       "r": 0,
       "dir": 0,
-      "color": "sky",
-      "frozen": true
+      "color": "coral"
     },
     {
       "id": "t2",
       "q": 1,
       "r": 0,
       "dir": 0,
-      "color": "coral"
+      "color": "sky"
     },
     {
       "id": "t3",
-      "q": -1,
-      "r": 0,
-      "dir": 3,
+      "q": 1,
+      "r": -1,
+      "dir": 1,
       "color": "mint"
     },
     {
       "id": "t4",
       "q": 0,
-      "r": 1,
-      "dir": 5,
+      "r": -1,
+      "dir": 2,
       "color": "gold"
     },
     {
       "id": "t5",
-      "q": 0,
+      "q": -1,
       "r": -1,
-      "dir": 2,
+      "dir": 3,
       "color": "lavender"
     },
     {
       "id": "t6",
-      "q": 1,
-      "r": -1,
-      "dir": 1,
+      "q": -1,
+      "r": 0,
+      "dir": 3,
       "color": "rose"
     },
     {
@@ -86,6 +92,28 @@
       "r": 1,
       "dir": 4,
       "color": "coral"
+    },
+    {
+      "id": "t8",
+      "q": 0,
+      "r": 1,
+      "dir": 5,
+      "color": "sky"
+    },
+    {
+      "id": "t9",
+      "q": 1,
+      "r": 1,
+      "dir": 0,
+      "color": "mint"
+    },
+    {
+      "id": "t10",
+      "q": 0,
+      "r": 0,
+      "dir": 3,
+      "color": "gold"
     }
-  ]
+  ],
+  "par": 10
 }

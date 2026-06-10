@@ -1,6 +1,6 @@
 {
   "id": 10,
-  "name": "Procession",
+  "name": "Pinwheel",
   "cells": [
     {
       "q": 0,
@@ -11,54 +11,76 @@
       "r": 0
     },
     {
-      "q": 2,
+      "q": -1,
       "r": 0
     },
     {
-      "q": 3,
-      "r": 0
+      "q": 0,
+      "r": 1
     },
     {
-      "q": 4,
-      "r": 0
+      "q": 0,
+      "r": -1
+    },
+    {
+      "q": 1,
+      "r": -1
+    },
+    {
+      "q": -1,
+      "r": 1
     }
   ],
   "tiles": [
     {
       "id": "t1",
-      "q": 4,
+      "q": 1,
       "r": 0,
       "dir": 0,
       "color": "coral"
     },
     {
       "id": "t2",
-      "q": 3,
+      "q": -1,
       "r": 0,
-      "dir": 0,
+      "dir": 3,
       "color": "sky"
     },
     {
       "id": "t3",
-      "q": 2,
-      "r": 0,
-      "dir": 0,
+      "q": 0,
+      "r": 1,
+      "dir": 5,
       "color": "mint"
     },
     {
       "id": "t4",
-      "q": 1,
-      "r": 0,
-      "dir": 0,
+      "q": 0,
+      "r": -1,
+      "dir": 2,
       "color": "gold"
     },
     {
       "id": "t5",
+      "q": 1,
+      "r": -1,
+      "dir": 1,
+      "color": "lavender"
+    },
+    {
+      "id": "t6",
+      "q": -1,
+      "r": 1,
+      "dir": 4,
+      "color": "rose"
+    },
+    {
+      "id": "t7",
       "q": 0,
       "r": 0,
       "dir": 0,
-      "color": "lavender"
+      "color": "coral"
     }
   ],
-  "par": 5
+  "par": 7
 }

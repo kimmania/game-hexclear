@@ -10,15 +10,14 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 2. The tile moves along that line until it **leaves the board**.
 3. If another tile or wall is in the way, the move is **blocked**.
 4. **Holes** in the board swallow any tile that slides over them.
-5. **Frozen** tiles cannot slide while another tile sits next to them.
+5. **Frozen** tiles cannot slide while another tile sits next to them — clear neighbors first, then slide through the gap they leave.
 6. **Clear every hex** to win the level. Beat **par** for a perfect score.
 
 ## Features
 
-- 28 puzzle levels with progressive difficulty (walls, holes, frozen tiles, and expert finales)
+- 30 puzzle levels with progressive difficulty (frozen tiles from level 6, walls from level 11, holes from level 18)
 - Move counter and par targets on advanced levels; best scores saved locally
 - Level picker, unlock progress, and in-progress save per level
-- Undo (button or ⌘/Ctrl+Z)
 - Settings: sound effects and reduce motion
 - Light haptic feedback on supported phones
 - Installable PWA with offline play

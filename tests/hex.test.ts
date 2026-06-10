@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applySlide, canSlideTile, createGameState, isWin } from '../src/core/board';
+import { applySlide, canSlideTile, createGameState, isWin, recordMove } from '../src/core/board';
 import { AXIAL_DIRS, buildCellSet, coordKey, directionVector, slidePath, stepCoord } from '../src/core/hex';
 import { axialToPixel, slideDirectionAngleDeg } from '../src/ui/hexLayout';
 import type { LevelDef } from '../src/core/types';
@@ -81,6 +81,13 @@ describe('board rules', () => {
     const state = createGameState(level);
     expect(canSlideTile(state, 'a').ok).toBe(false);
     expect(canSlideTile(state, 'b').ok).toBe(true);
+  });
+
+  it('increments move count on every tap including blocked attempts', () => {
+    const state = createGameState(level);
+    const blocked = recordMove(state);
+    expect(blocked.moveCount).toBe(1);
+    expect(canSlideTile(blocked, 'a').ok).toBe(false);
   });
 
   it('clears tiles in order and wins', () => {
