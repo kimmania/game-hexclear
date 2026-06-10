@@ -107,3 +107,27 @@ export function boundsOfCells(cells: HexCoord[]): {
 
   return { minQ, maxQ, minR, maxR };
 }
+
+/** Round fractional axial coords to the nearest hex. */
+export function axialRound(q: number, r: number): HexCoord {
+  const x = q;
+  const z = r;
+  const y = -x - z;
+  let rq = Math.round(x);
+  let rr = Math.round(z);
+  let ry = Math.round(y);
+  const dq = Math.abs(rq - x);
+  const dr = Math.abs(rr - z);
+  const dy = Math.abs(ry - y);
+  if (dq > dr && dq > dy) rq = -rr - ry;
+  else if (dr > dy) rr = -rq - ry;
+  else ry = -rq - rr;
+  return { q: rq, r: rr };
+}
+
+/** Inverse of pointy-top axialToPixel (see hexLayout). */
+export function pixelToAxial(x: number, y: number, size = 34): HexCoord {
+  const q = ((SQRT3 / 3) * x - (1 / 3) * y) / size;
+  const r = ((2 / 3) * y) / size;
+  return axialRound(q, r);
+}

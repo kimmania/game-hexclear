@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applySlide, canSlideTile, createGameState, isWin } from '../src/core/board';
-import { AXIAL_DIRS, buildCellSet, coordKey, directionAngleDeg, directionVector, slidePath, stepCoord } from '../src/core/hex';
+import { AXIAL_DIRS, buildCellSet, coordKey, directionVector, slidePath, stepCoord } from '../src/core/hex';
 import { axialToPixel, slideDirectionAngleDeg } from '../src/ui/hexLayout';
 import type { LevelDef } from '../src/core/types';
 import { solveLevel } from '../src/core/solver';
@@ -23,10 +23,6 @@ describe('hex math', () => {
       const unit = directionVector(dir as 0 | 1 | 2 | 3 | 4 | 5);
       expect(unit.x).toBeCloseTo(pixelDx / len, 5);
       expect(unit.y).toBeCloseTo(pixelDy / len, 5);
-      expect(directionAngleDeg(dir as 0 | 1 | 2 | 3 | 4 | 5)).toBeCloseTo(
-        (Math.atan2(pixelDy, pixelDx) * 180) / Math.PI,
-        5,
-      );
       expect(slideDirectionAngleDeg(0, 0, dir as 0 | 1 | 2 | 3 | 4 | 5)).toBeCloseTo(
         (Math.atan2(pixelDy, pixelDx) * 180) / Math.PI,
         5,

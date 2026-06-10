@@ -40,6 +40,23 @@ Open the URL from the terminal (usually `http://localhost:5173/game-hexclear/`).
 | `npm run validate-levels` | BFS solvability check for every level |
 | `npm run generate-icons` | Regenerate PNG icons from `public/icons/icon.svg` |
 | `npm run lighthouse` | Build + preview, then run Lighthouse (mobile) |
+| Level editor | Add `?edit=1` or `#edit` to the game URL (e.g. `?edit=1&level=16`) |
+
+## Level editor
+
+Open **`/game-hexclear/?edit=1`** in the browser.
+
+| Tool | Action |
+|------|--------|
+| **Cell** | Tap ghost hexes to expand the board |
+| **Tile** | Place a tile; tap again to rotate arrow (0→5) |
+| **Wall** | Toggle a blocking wall on a cell |
+| **Hole** | Toggle a pit — tiles fall in when slid over |
+| **Erase** | Remove a cell and its contents |
+
+**Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, add the id to `index.json`, run `npm run validate-levels`.
+
+Edit an existing level: `?edit=1&level=5`
 
 ## Lighthouse (quality check)
 
