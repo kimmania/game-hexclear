@@ -18,19 +18,31 @@ function isCoord(value: unknown): boolean {
 
 function isTile(value: unknown): boolean {
   if (!isRecord(value)) return false;
-  return (
-    typeof value.id === 'string' &&
-    typeof value.q === 'number' &&
-    Number.isInteger(value.q) &&
-    typeof value.r === 'number' &&
-    Number.isInteger(value.r) &&
-    typeof value.dir === 'number' &&
-    Number.isInteger(value.dir) &&
-    value.dir >= 0 &&
-    value.dir <= 5 &&
-    typeof value.color === 'string' &&
-    COLORS.has(value.color)
-  );
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r) ||
+    typeof value.dir !== 'number' ||
+    !Number.isInteger(value.dir) ||
+    value.dir < 0 ||
+    value.dir > 5 ||
+    typeof value.color !== 'string' ||
+    !COLORS.has(value.color)
+  ) {
+    return false;
+  }
+  if (value.frozen !== undefined && typeof value.frozen !== 'boolean') {
+    return false;
+  }
+  if (
+    value.chain !== undefined &&
+    (typeof value.chain !== 'number' || !Number.isInteger(value.chain) || value.chain < 1)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export function validateLevel(level: LevelDef, expectedId?: number): void {
@@ -42,6 +54,12 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
   }
   if (typeof level.name !== 'string' || level.name.trim().length === 0) {
     throw new Error('Level name is required');
+  }
+  if (
+    level.par !== undefined &&
+    (typeof level.par !== 'number' || !Number.isInteger(level.par) || level.par < 1)
+  ) {
+    throw new Error('Level par must be a positive integer');
   }
   if (!Array.isArray(level.cells) || level.cells.length === 0) {
     throw new Error('Level must define at least one cell');

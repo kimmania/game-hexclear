@@ -2,6 +2,7 @@ import {
   applySlide,
   canSlideTile,
   createGameState,
+  hintForBlockReason,
   isWin,
   resetGameState,
   statusLabel,
@@ -18,8 +19,10 @@ import {
   findInProgressLevelIds,
   findResumeLevel,
   getCompletedLevelIds,
+  getBestMoves,
   loadProgress,
   loadSession,
+  recordBestMoves,
   saveProgress,
   saveSession,
   unlockNextLevel,
@@ -28,6 +31,7 @@ import {
   bindControls,
   setContinueBanner,
   setHint,
+  setMoveCounter,
   setNextEnabled,
   setPrevEnabled,
   setStatusChip,
@@ -107,6 +111,12 @@ export class HexClearApp {
           walls: session.walls,
           holes: session.holes ?? this.levelDef.holes ?? [],
           tiles: session.tiles,
+          moveCount: session.moveCount ?? 0,
+          ...(session.par !== undefined
+            ? { par: session.par }
+            : this.levelDef.par !== undefined
+              ? { par: this.levelDef.par }
+              : {}),
         };
       } else {
         this.state = createGameState(this.levelDef);
@@ -131,7 +141,29 @@ export class HexClearApp {
     setPrevEnabled(levelId > 1);
     setNextEnabled(levelId < this.levelIds.length && levelId < this.progress.highestUnlocked);
     setStatusChip(statusLabel(this.state), isWin(this.state) ? 'won' : 'playing');
-    showWinBanner(isWin(this.state));
+    setMoveCounter(this.state.moveCount, this.state.par);
+    showWinBanner(isWin(this.state), this.winMessage(this.state));
+  }
+
+  private winMessage(state: GameState): string {
+    const moves = state.moveCount;
+    const par = state.par;
+    const best = getBestMoves(this.progress, state.levelId);
+
+    if (par === undefined) {
+      return `Level cleared in ${moves} move${moves === 1 ? '' : 's'}!`;
+    }
+
+    const parText =
+      moves <= par
+        ? `Par ${par} — nice!`
+        : `${moves - par} over par ${par}`;
+
+    if (best !== undefined && moves <= best) {
+      return `Cleared in ${moves} moves. ${parText} New best!`;
+    }
+
+    return `Cleared in ${moves} moves. ${parText}`;
   }
 
   private updateContinueBanner(resumeLevel: number | null): void {
@@ -162,7 +194,7 @@ export class HexClearApp {
       this.board.flashBlocked(tileId);
       playSound('blocked');
       pulseHaptic([12, 40, 12]);
-      setHint('That hex is blocked — clear the path first.');
+      setHint(hintForBlockReason(result.reason));
       return;
     }
 
@@ -174,6 +206,13 @@ export class HexClearApp {
     this.state = applySlide(this.state, tileId);
     this.board.render(this.state);
     this.persistSession();
+
+    if (isWin(this.state)) {
+      this.progress = unlockNextLevel(this.progress, this.state.levelId);
+      this.progress = recordBestMoves(this.progress, this.state.levelId, this.state.moveCount);
+      saveProgress(this.progress);
+    }
+
     this.syncChrome();
 
     playSound('slide');
@@ -184,8 +223,6 @@ export class HexClearApp {
       setHint('Board cleared!');
       playSound('win');
       pulseHaptic([10, 30, 10, 30, 20]);
-      this.progress = unlockNextLevel(this.progress, this.state.levelId);
-      saveProgress(this.progress);
       setNextEnabled(this.state.levelId < this.levelIds.length);
     } else {
       setHint(`${remaining} hex${remaining === 1 ? '' : 'es'} left.`);

@@ -87,8 +87,88 @@ describe('board rules', () => {
     let state = createGameState(level);
     state = applySlide(state, 'b');
     expect(isWin(state)).toBe(false);
+    expect(state.moveCount).toBe(1);
     state = applySlide(state, 'a');
     expect(isWin(state)).toBe(true);
+    expect(state.moveCount).toBe(2);
+  });
+});
+
+describe('frozen tiles', () => {
+  const frozenLevel: LevelDef = {
+    id: 101,
+    name: 'Frozen',
+    cells: [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+      { q: 2, r: 0 },
+    ],
+    tiles: [
+      { id: 'core', q: 1, r: 0, dir: 0, color: 'sky', frozen: true },
+      { id: 'outer', q: 2, r: 0, dir: 0, color: 'coral' },
+    ],
+  };
+
+  it('blocks frozen tiles while neighbors remain', () => {
+    const state = createGameState(frozenLevel);
+    expect(canSlideTile(state, 'core').ok).toBe(false);
+    expect(canSlideTile(state, 'outer').ok).toBe(true);
+  });
+
+  it('unlocks frozen tile after neighbors are cleared', () => {
+    let state = createGameState(frozenLevel);
+    state = applySlide(state, 'outer');
+    expect(canSlideTile(state, 'core').ok).toBe(true);
+    expect(solveLevel(frozenLevel).solvable).toBe(true);
+  });
+});
+
+describe('chain tiles', () => {
+  const chainLevel: LevelDef = {
+    id: 102,
+    name: 'Chain',
+    cells: [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+      { q: 2, r: 0 },
+      { q: 0, r: 1 },
+    ],
+    tiles: [
+      { id: 'a', q: 0, r: 0, dir: 0, color: 'coral', chain: 1 },
+      { id: 'b', q: 1, r: 0, dir: 0, color: 'sky', chain: 1 },
+      { id: 'c', q: 0, r: 1, dir: 4, color: 'mint', chain: 2 },
+    ],
+  };
+
+  it('blocks higher chain tiles until lower chains are gone', () => {
+    const state = createGameState(chainLevel);
+    expect(canSlideTile(state, 'c').ok).toBe(false);
+    expect(canSlideTile(state, 'b').ok).toBe(true);
+  });
+
+  it('solves chain level', () => {
+    expect(solveLevel(chainLevel).solvable).toBe(true);
+  });
+});
+
+describe('par', () => {
+  it('stores par on game state', () => {
+    const level: LevelDef = {
+      id: 103,
+      name: 'Par',
+      par: 2,
+      cells: [
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+      ],
+      tiles: [
+        { id: 'a', q: 0, r: 0, dir: 0, color: 'coral' },
+        { id: 'b', q: 1, r: 0, dir: 0, color: 'sky' },
+      ],
+    };
+    const state = createGameState(level);
+    expect(state.par).toBe(2);
+    expect(state.moveCount).toBe(0);
   });
 });
 

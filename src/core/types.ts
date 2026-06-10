@@ -20,6 +20,10 @@ export type TileDef = {
   r: number;
   dir: HexDirection;
   color: TileColor;
+  /** Cannot slide while a tile occupies an adjacent hex. */
+  frozen?: boolean;
+  /** Lower numbers must be cleared before this tile can slide. */
+  chain?: number;
 };
 
 export type LevelDef = {
@@ -28,8 +32,9 @@ export type LevelDef = {
   cells: HexCoord[];
   tiles: TileDef[];
   walls?: HexCoord[];
-  /** Pit cells — tiles slide in and are removed; nothing can start here. */
   holes?: HexCoord[];
+  /** Target move count for an optimal clear. */
+  par?: number;
 };
 
 export type TileState = {
@@ -38,6 +43,8 @@ export type TileState = {
   r: number;
   dir: HexDirection;
   color: TileColor;
+  frozen?: boolean;
+  chain?: number;
 };
 
 export type GameStatus = 'playing' | 'won';
@@ -50,10 +57,14 @@ export type GameState = {
   walls: HexCoord[];
   holes: HexCoord[];
   tiles: TileState[];
+  moveCount: number;
+  par?: number;
 };
+
+export type SlideBlockReason = 'blocked' | 'missing' | 'finished' | 'frozen' | 'chain';
 
 export type SlideResult =
   | { ok: true; path: HexCoord[] }
-  | { ok: false; reason: 'blocked' | 'missing' | 'finished' };
+  | { ok: false; reason: SlideBlockReason };
 
 export type TileId = string;

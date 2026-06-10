@@ -99,6 +99,31 @@ export function createEditorBoard(
       body.setAttribute('stroke-width', '2');
       group.appendChild(body);
       group.appendChild(createDirectionArrow(tile.q, tile.r, tile.dir));
+
+      if (tile.frozen) {
+        const frost = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        frost.setAttribute('points', hexPolygonPoints(x, y, HEX_RADIUS - 5));
+        frost.setAttribute('class', 'hex-tile-frost');
+        group.appendChild(frost);
+      }
+
+      if (tile.chain !== undefined) {
+        const badge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        badge.setAttribute('cx', String(x + HEX_RADIUS * 0.42));
+        badge.setAttribute('cy', String(y - HEX_RADIUS * 0.42));
+        badge.setAttribute('r', '9');
+        badge.setAttribute('class', 'hex-chain-badge');
+        group.appendChild(badge);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', String(x + HEX_RADIUS * 0.42));
+        label.setAttribute('y', String(y - HEX_RADIUS * 0.42 + 4));
+        label.setAttribute('class', 'hex-chain-label');
+        label.setAttribute('text-anchor', 'middle');
+        label.textContent = String(tile.chain);
+        group.appendChild(label);
+      }
+
       tilesLayer.appendChild(group);
     }
   }

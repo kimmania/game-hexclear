@@ -6,6 +6,8 @@ export type SavedProgress = {
   highestUnlocked: number;
   currentLevel: number;
   completedLevels?: number[];
+  /** Best move count per level id (string key). */
+  bestMoves?: Record<string, number>;
 };
 
 export function loadProgress(): SavedProgress {
@@ -31,7 +33,10 @@ export function saveProgress(progress: SavedProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
-export type SessionSnapshot = Pick<GameState, 'status' | 'cells' | 'walls' | 'holes' | 'tiles'>;
+export type SessionSnapshot = Pick<
+  GameState,
+  'status' | 'cells' | 'walls' | 'holes' | 'tiles' | 'moveCount' | 'par'
+>;
 
 export function saveSession(levelId: number, state: GameState): void {
   const key = `${STORAGE_KEY}:level:${levelId}`;
@@ -43,6 +48,8 @@ export function saveSession(levelId: number, state: GameState): void {
       walls: state.walls,
       holes: state.holes,
       tiles: state.tiles,
+      moveCount: state.moveCount,
+      ...(state.par !== undefined ? { par: state.par } : {}),
     }),
   );
 }
@@ -101,4 +108,24 @@ export function unlockNextLevel(progress: SavedProgress, completedLevelId: numbe
     currentLevel: next,
     completedLevels: [...completed].sort((a, b) => a - b),
   };
+}
+
+export function recordBestMoves(
+  progress: SavedProgress,
+  levelId: number,
+  moves: number,
+): SavedProgress {
+  const key = String(levelId);
+  const previous = progress.bestMoves?.[key];
+  if (previous !== undefined && previous <= moves) {
+    return progress;
+  }
+  return {
+    ...progress,
+    bestMoves: { ...(progress.bestMoves ?? {}), [key]: moves },
+  };
+}
+
+export function getBestMoves(progress: SavedProgress, levelId: number): number | undefined {
+  return progress.bestMoves?.[String(levelId)];
 }

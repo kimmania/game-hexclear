@@ -110,6 +110,7 @@ body {
 
 .continue-banner,
 .level-title,
+.move-counter,
 .hint {
   margin: 0;
 }
@@ -117,6 +118,12 @@ body {
 .level-title {
   font-size: 1.05rem;
   font-weight: 600;
+}
+
+.move-counter {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .hint {
@@ -185,6 +192,32 @@ body {
 
 .hex-tile-blocked {
   filter: saturate(0.75);
+}
+
+.hex-tile-locked {
+  opacity: 0.88;
+}
+
+.hex-tile-frost {
+  fill: rgba(210, 235, 255, 0.45);
+  stroke: rgba(180, 220, 255, 0.85);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.hex-chain-badge {
+  fill: #1a2332;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.hex-chain-label {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
 }
 
 .hex-tile-shake {

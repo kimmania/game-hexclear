@@ -1,5 +1,5 @@
-import { canSlideTile } from '../core/board';
-import type { GameState, HexCoord, TileId } from '../core/types';
+import { canSlideTile, isChainLocked, isFrozenLocked } from '../core/board';
+import type { GameState, HexCoord, TileId, TileState } from '../core/types';
 import {
   HEX_RADIUS,
   TILE_COLORS,
@@ -8,6 +8,44 @@ import {
   createDirectionArrow,
   hexPolygonPoints,
 } from './hexLayout';
+
+function appendTileMarkers(
+  group: SVGGElement,
+  x: number,
+  y: number,
+  tile: TileState,
+  state: GameState,
+): void {
+  if (tile.frozen) {
+    group.classList.add('hex-tile-frozen');
+    const frost = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    frost.setAttribute('points', hexPolygonPoints(x, y, HEX_RADIUS - 5));
+    frost.setAttribute('class', 'hex-tile-frost');
+    group.appendChild(frost);
+  }
+
+  if (tile.chain !== undefined) {
+    const badge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    badge.setAttribute('cx', String(x + HEX_RADIUS * 0.42));
+    badge.setAttribute('cy', String(y - HEX_RADIUS * 0.42));
+    badge.setAttribute('r', '9');
+    badge.setAttribute('class', 'hex-chain-badge');
+    group.appendChild(badge);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', String(x + HEX_RADIUS * 0.42));
+    label.setAttribute('y', String(y - HEX_RADIUS * 0.42 + 4));
+    label.setAttribute('class', 'hex-chain-label');
+    label.setAttribute('text-anchor', 'middle');
+    label.textContent = String(tile.chain);
+    group.appendChild(label);
+  }
+
+  const locked = isFrozenLocked(state, tile) || isChainLocked(state, tile);
+  if (locked) {
+    group.classList.add('hex-tile-locked');
+  }
+}
 
 export type HexBoard = {
   svg: SVGSVGElement;
@@ -77,6 +115,7 @@ export function createHexBoard(
       group.appendChild(body);
 
       group.appendChild(createDirectionArrow(tile.q, tile.r, tile.dir));
+      appendTileMarkers(group, x, y, tile, state);
 
       const slide = canSlideTile(state, tile.id);
       if (!slide.ok) {

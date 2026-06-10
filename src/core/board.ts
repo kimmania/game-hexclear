@@ -1,11 +1,24 @@
-import { buildCellSet, coordKey, slidePath } from './hex';
+import { AXIAL_DIRS, buildCellSet, coordKey, slidePath } from './hex';
 import type {
   GameState,
   LevelDef,
+  SlideBlockReason,
   SlideResult,
   TileId,
   TileState,
 } from './types';
+
+function copyTile(tile: TileState): TileState {
+  return {
+    id: tile.id,
+    q: tile.q,
+    r: tile.r,
+    dir: tile.dir,
+    color: tile.color,
+    ...(tile.frozen ? { frozen: true } : {}),
+    ...(tile.chain !== undefined ? { chain: tile.chain } : {}),
+  };
+}
 
 export function createGameState(level: LevelDef): GameState {
   return {
@@ -21,7 +34,11 @@ export function createGameState(level: LevelDef): GameState {
       r: tile.r,
       dir: tile.dir,
       color: tile.color,
+      ...(tile.frozen ? { frozen: true } : {}),
+      ...(tile.chain !== undefined ? { chain: tile.chain } : {}),
     })),
+    moveCount: 0,
+    ...(level.par !== undefined ? { par: level.par } : {}),
   };
 }
 
@@ -37,6 +54,44 @@ function occupiedKeys(state: GameState, ignoreTileId?: TileId): Set<string> {
   return keys;
 }
 
+export function hasAdjacentTile(state: GameState, tile: TileState): boolean {
+  for (const delta of AXIAL_DIRS) {
+    const nq = tile.q + delta.q;
+    const nr = tile.r + delta.r;
+    if (state.tiles.some((other) => other.id !== tile.id && other.q === nq && other.r === nr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function isFrozenLocked(state: GameState, tile: TileState): boolean {
+  return tile.frozen === true && hasAdjacentTile(state, tile);
+}
+
+export function isChainLocked(state: GameState, tile: TileState): boolean {
+  if (tile.chain === undefined) return false;
+  return state.tiles.some(
+    (other) =>
+      other.id !== tile.id &&
+      other.chain !== undefined &&
+      other.chain < tile.chain!,
+  );
+}
+
+export function slideBlockReason(state: GameState, tile: TileState): SlideBlockReason | null {
+  if (isFrozenLocked(state, tile)) return 'frozen';
+  if (isChainLocked(state, tile)) return 'chain';
+
+  const cells = buildCellSet(state.cells);
+  const holes = buildCellSet(state.holes);
+  const blocked = occupiedKeys(state, tile.id);
+  const path = slidePath({ q: tile.q, r: tile.r }, tile.dir, cells, holes, blocked);
+
+  if (path.length <= 1) return 'blocked';
+  return null;
+}
+
 export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
   if (state.status !== 'playing') {
     return { ok: false, reason: 'finished' };
@@ -47,14 +102,15 @@ export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
     return { ok: false, reason: 'missing' };
   }
 
+  const block = slideBlockReason(state, tile);
+  if (block) {
+    return { ok: false, reason: block };
+  }
+
   const cells = buildCellSet(state.cells);
   const holes = buildCellSet(state.holes);
   const blocked = occupiedKeys(state, tileId);
   const path = slidePath({ q: tile.q, r: tile.r }, tile.dir, cells, holes, blocked);
-
-  if (path.length <= 1) {
-    return { ok: false, reason: 'blocked' };
-  }
 
   return { ok: true, path };
 }
@@ -67,6 +123,7 @@ export function applySlide(state: GameState, tileId: TileId): GameState {
 
   const next: GameState = {
     ...state,
+    moveCount: state.moveCount + 1,
     tiles: state.tiles.filter((tile) => tile.id !== tileId),
   };
 
@@ -89,7 +146,9 @@ export function cloneState(state: GameState): GameState {
     cells: state.cells.map((cell) => ({ ...cell })),
     walls: state.walls.map((wall) => ({ ...wall })),
     holes: state.holes.map((hole) => ({ ...hole })),
-    tiles: state.tiles.map((tile) => ({ ...tile })),
+    tiles: state.tiles.map(copyTile),
+    moveCount: state.moveCount,
+    ...(state.par !== undefined ? { par: state.par } : {}),
   };
 }
 
@@ -108,4 +167,17 @@ export function tilesRemaining(state: GameState): number {
 
 export function findTileAt(state: GameState, q: number, r: number): TileState | undefined {
   return state.tiles.find((tile) => tile.q === q && tile.r === r);
+}
+
+export function hintForBlockReason(reason: SlideBlockReason): string {
+  switch (reason) {
+    case 'frozen':
+      return 'That hex is frozen — clear its neighbors first.';
+    case 'chain':
+      return 'Clear lower-chain tiles before this one.';
+    case 'blocked':
+      return 'That hex is blocked — clear the path first.';
+    default:
+      return 'That move is not available.';
+  }
 }

@@ -24,8 +24,21 @@ export function updateHeader(levelName: string, levelId: number, total: number):
   }
 }
 
-export function showWinBanner(show: boolean): void {
-  document.getElementById('win-banner')?.classList.toggle('hidden', !show);
+export function showWinBanner(show: boolean, message = 'Level cleared!'): void {
+  const banner = document.getElementById('win-banner');
+  if (!banner) return;
+  banner.textContent = message;
+  banner.classList.toggle('hidden', !show);
+}
+
+export function setMoveCounter(moves: number, par?: number): void {
+  const el = document.getElementById('move-counter');
+  if (!el) return;
+  if (par !== undefined) {
+    el.textContent = `Moves: ${moves} · Par ${par}`;
+  } else {
+    el.textContent = `Moves: ${moves}`;
+  }
 }
 
 export function setNextEnabled(enabled: boolean): void {

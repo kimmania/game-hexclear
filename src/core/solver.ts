@@ -13,7 +13,11 @@ export type SolverResult = {
 
 export function stateKey(state: GameState): string {
   const tiles = state.tiles
-    .map((tile) => `${tile.id}@${tile.q},${tile.r}:${tile.dir}`)
+    .map((tile) => {
+      const frozen = tile.frozen ? 'f' : '';
+      const chain = tile.chain ?? '';
+      return `${tile.id}@${tile.q},${tile.r}:${tile.dir}${frozen}${chain}`;
+    })
     .sort()
     .join('|');
   return `${state.status}|${tiles}`;

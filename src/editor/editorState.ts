@@ -1,7 +1,7 @@
 import { coordKey } from '../core/hex';
 import type { HexCoord, HexDirection, LevelDef, TileColor, TileDef } from '../core/types';
 
-export type EditorTool = 'cell' | 'tile' | 'wall' | 'hole' | 'erase';
+export type EditorTool = 'cell' | 'tile' | 'wall' | 'hole' | 'frozen' | 'erase';
 
 export type EditorDraft = {
   id: number;
@@ -10,6 +10,12 @@ export type EditorDraft = {
   tiles: TileDef[];
   walls: HexCoord[];
   holes: HexCoord[];
+  par?: number;
+};
+
+export type TilePlacementOptions = {
+  frozen?: boolean;
+  chain?: number;
 };
 
 export const TILE_COLOR_OPTIONS: TileColor[] = [
@@ -29,6 +35,7 @@ export function draftFromLevel(level: LevelDef): EditorDraft {
     tiles: level.tiles.map((tile) => ({ ...tile })),
     walls: (level.walls ?? []).map((wall) => ({ ...wall })),
     holes: (level.holes ?? []).map((hole) => ({ ...hole })),
+    ...(level.par !== undefined ? { par: level.par } : {}),
   };
 }
 
@@ -55,6 +62,9 @@ export function toLevelDef(draft: EditorDraft): LevelDef {
   }
   if (draft.holes.length > 0) {
     level.holes = draft.holes.map((hole) => ({ ...hole }));
+  }
+  if (draft.par !== undefined && draft.par > 0) {
+    level.par = draft.par;
   }
   return level;
 }
@@ -122,7 +132,23 @@ export function toggleHole(draft: EditorDraft, q: number, r: number): void {
   draft.holes.push({ q, r });
 }
 
-export function addOrCycleTile(draft: EditorDraft, q: number, r: number, color: TileColor): void {
+export function toggleTileFrozen(draft: EditorDraft, q: number, r: number): void {
+  const tile = findTile(draft, q, r);
+  if (!tile) return;
+  if (tile.frozen) {
+    delete tile.frozen;
+  } else {
+    tile.frozen = true;
+  }
+}
+
+export function addOrCycleTile(
+  draft: EditorDraft,
+  q: number,
+  r: number,
+  color: TileColor,
+  options: TilePlacementOptions = {},
+): void {
   if (!hasCell(draft, q, r)) return;
   if (draft.walls.some((wall) => wall.q === q && wall.r === r)) return;
   if (draft.holes.some((hole) => hole.q === q && hole.r === r)) return;
@@ -134,13 +160,20 @@ export function addOrCycleTile(draft: EditorDraft, q: number, r: number, color: 
     return;
   }
 
-  draft.tiles.push({
+  const tile: TileDef = {
     id: nextTileId(draft),
     q,
     r,
     dir: 0,
     color,
-  });
+  };
+  if (options.frozen) {
+    tile.frozen = true;
+  }
+  if (options.chain !== undefined && options.chain > 0) {
+    tile.chain = options.chain;
+  }
+  draft.tiles.push(tile);
 }
 
 export function applyTool(
@@ -148,6 +181,7 @@ export function applyTool(
   tool: EditorTool,
   coord: HexCoord,
   tileColor: TileColor,
+  tileOptions: TilePlacementOptions = {},
 ): void {
   const { q, r } = coord;
 
@@ -156,13 +190,16 @@ export function applyTool(
       addCell(draft, q, r);
       break;
     case 'tile':
-      addOrCycleTile(draft, q, r, tileColor);
+      addOrCycleTile(draft, q, r, tileColor, tileOptions);
       break;
     case 'wall':
       toggleWall(draft, q, r);
       break;
     case 'hole':
       toggleHole(draft, q, r);
+      break;
+    case 'frozen':
+      toggleTileFrozen(draft, q, r);
       break;
     case 'erase':
       removeCell(draft, q, r);

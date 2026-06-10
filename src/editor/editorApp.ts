@@ -22,6 +22,7 @@ const TOOL_HINTS: Record<EditorTool, string> = {
   tile: 'Tap a cell to place a tile. Tap again on the same cell to rotate its arrow.',
   wall: 'Tap a cell to toggle a wall (blocks slides).',
   hole: 'Tap a cell to toggle a pit (tiles fall in and are removed).',
+  frozen: 'Tap a tile to toggle frozen (locked while neighbors remain).',
   erase: 'Tap a cell to remove it and anything on it.',
 };
 
@@ -54,6 +55,8 @@ export async function bootstrapEditor(): Promise<void> {
   const draft = await loadInitialDraft();
   let tool: EditorTool = 'cell';
   let tileColor: TileColor = 'coral';
+  let tileFrozen = false;
+  let tileChain = 0;
 
   app.innerHTML = '';
   app.className = 'editor-app';
@@ -77,6 +80,7 @@ export async function bootstrapEditor(): Promise<void> {
     { id: 'tile', label: 'Tile' },
     { id: 'wall', label: 'Wall' },
     { id: 'hole', label: 'Hole' },
+    { id: 'frozen', label: 'Frozen' },
     { id: 'erase', label: 'Erase' },
   ];
 
@@ -112,6 +116,31 @@ export async function bootstrapEditor(): Promise<void> {
     tileColor = colorSelect.value as TileColor;
   });
 
+  const frozenLabel = document.createElement('label');
+  frozenLabel.className = 'editor-color-label';
+  const frozenCheck = document.createElement('input');
+  frozenCheck.type = 'checkbox';
+  frozenCheck.addEventListener('change', () => {
+    tileFrozen = frozenCheck.checked;
+  });
+  frozenLabel.append(frozenCheck, document.createTextNode(' Frozen'));
+
+  const chainLabel = document.createElement('label');
+  chainLabel.className = 'editor-color-label';
+  chainLabel.textContent = 'Chain';
+  const chainInput = document.createElement('input');
+  chainInput.type = 'number';
+  chainInput.min = '0';
+  chainInput.max = '9';
+  chainInput.value = '0';
+  chainInput.className = 'editor-field editor-chain-input';
+  chainInput.setAttribute('aria-label', 'Chain order for new tiles');
+  chainInput.addEventListener('change', () => {
+    tileChain = Math.max(0, Math.min(9, Math.floor(Number(chainInput.value)) || 0));
+    chainInput.value = String(tileChain);
+  });
+  chainLabel.append(chainInput);
+
   const clearBtn = document.createElement('button');
   clearBtn.type = 'button';
   clearBtn.className = 'btn';
@@ -126,7 +155,7 @@ export async function bootstrapEditor(): Promise<void> {
   });
 
   colorLabel.append(colorSelect);
-  optionsBar.append(colorLabel, clearBtn);
+  optionsBar.append(colorLabel, frozenLabel, chainLabel, clearBtn);
 
   const hint = document.createElement('p');
   hint.className = 'hint editor-hint';
@@ -154,6 +183,13 @@ export async function bootstrapEditor(): Promise<void> {
   const statusEl = document.createElement('p');
   statusEl.className = 'editor-status';
   statusEl.setAttribute('role', 'status');
+
+  const parInput = document.createElement('input');
+  parInput.type = 'number';
+  parInput.min = '0';
+  parInput.className = 'editor-field';
+  parInput.placeholder = 'Par (optional)';
+  parInput.value = draft.par !== undefined ? String(draft.par) : '';
 
   const exportActions = document.createElement('div');
   exportActions.className = 'editor-export-actions';
@@ -204,11 +240,24 @@ export async function bootstrapEditor(): Promise<void> {
     draft.id = Math.max(1, Math.floor(Number(idInput.value)) || 1);
   });
 
-  exportPanel.append(nameInput, idInput, exportActions, statusEl, jsonPreview, shipHint);
+  parInput.addEventListener('change', () => {
+    const value = Math.floor(Number(parInput.value));
+    if (!Number.isFinite(value) || value < 1) {
+      delete draft.par;
+      parInput.value = '';
+      return;
+    }
+    draft.par = value;
+  });
+
+  exportPanel.append(nameInput, idInput, parInput, exportActions, statusEl, jsonPreview, shipHint);
   app.append(header, toolbar, optionsBar, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
-    applyTool(draft, tool, coord, tileColor);
+    applyTool(draft, tool, coord, tileColor, {
+      frozen: tileFrozen,
+      chain: tileChain > 0 ? tileChain : undefined,
+    });
     render();
   });
 
@@ -219,14 +268,23 @@ export async function bootstrapEditor(): Promise<void> {
     }
     hint.textContent = TOOL_HINTS[tool];
     colorSelect.disabled = tool !== 'tile';
+    frozenCheck.disabled = tool !== 'tile';
+    chainInput.disabled = tool !== 'tile';
     render();
   }
 
   function syncDraftMeta(): void {
     draft.name = nameInput.value.trim() || 'New level';
     draft.id = Math.max(1, Math.floor(Number(idInput.value)) || 1);
+    const parValue = Math.floor(Number(parInput.value));
+    if (Number.isFinite(parValue) && parValue >= 1) {
+      draft.par = parValue;
+    } else {
+      delete draft.par;
+    }
     nameInput.value = draft.name;
     idInput.value = String(draft.id);
+    parInput.value = draft.par !== undefined ? String(draft.par) : '';
   }
 
   function render(): void {
@@ -281,6 +339,7 @@ export async function bootstrapEditor(): Promise<void> {
 
   nameInput.value = draft.name;
   idInput.value = String(draft.id);
+  parInput.value = draft.par !== undefined ? String(draft.par) : '';
   selectTool('cell');
   render();
 }

@@ -10,11 +10,14 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 2. The tile moves along that line until it **leaves the board**.
 3. If another tile or wall is in the way, the move is **blocked**.
 4. **Holes** in the board swallow any tile that slides over them.
-5. **Clear every hex** to win the level.
+5. **Frozen** tiles cannot slide while another tile sits next to them.
+6. **Chain** numbers on tiles must be cleared in order (1 before 2, and so on).
+7. **Clear every hex** to win the level. Beat **par** for a perfect score.
 
 ## Features
 
-- 16 puzzle levels with progressive difficulty (walls from level 9, holes from level 16)
+- 20 puzzle levels with progressive difficulty (walls, holes, frozen tiles, chains)
+- Move counter and par targets on advanced levels; best scores saved locally
 - Level picker, unlock progress, and in-progress save per level
 - Undo (button or ⌘/Ctrl+Z)
 - Settings: sound effects and reduce motion
@@ -52,7 +55,10 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 | **Tile** | Place a tile; tap again to rotate arrow (0→5) |
 | **Wall** | Toggle a blocking wall on a cell |
 | **Hole** | Toggle a pit — tiles fall in when slid over |
+| **Frozen** | Toggle frozen lock on a tile |
 | **Erase** | Remove a cell and its contents |
+
+Set **Chain** (0 = none) and **Frozen** when placing tiles. Optional **Par** is the target move count.
 
 **Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, add the id to `index.json`, run `npm run validate-levels`.
 
