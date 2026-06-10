@@ -38,11 +38,12 @@ export function isOnBoard(cells: Set<string>, coord: HexCoord): boolean {
   return cells.has(coordKey(coord));
 }
 
-/** Slide ray from start in dir until the tile leaves the board. */
+/** Slide ray from start in dir until the tile exits or falls into a hole. */
 export function slidePath(
   start: HexCoord,
   dir: HexDirection,
   cells: Set<string>,
+  holes: Set<string>,
   blocked: Set<string>,
 ): HexCoord[] {
   const path: HexCoord[] = [start];
@@ -51,6 +52,11 @@ export function slidePath(
   while (true) {
     const next = stepCoord(current, dir);
     const nextKey = coordKey(next);
+
+    if (holes.has(nextKey)) {
+      path.push(next);
+      return path;
+    }
 
     if (!cells.has(nextKey)) {
       path.push(next);

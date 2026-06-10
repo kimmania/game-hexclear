@@ -28,6 +28,8 @@ export type LevelDef = {
   cells: HexCoord[];
   tiles: TileDef[];
   walls?: HexCoord[];
+  /** Pit cells — tiles slide in and are removed; nothing can start here. */
+  holes?: HexCoord[];
 };
 
 export type TileState = {
@@ -46,6 +48,7 @@ export type GameState = {
   status: GameStatus;
   cells: HexCoord[];
   walls: HexCoord[];
+  holes: HexCoord[];
   tiles: TileState[];
 };
 

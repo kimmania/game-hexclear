@@ -9,7 +9,10 @@ import {
 } from './core/board';
 import { fetchLevel, fetchLevelIndex } from './core/levels';
 import type { GameState, LevelDef, TileId } from './core/types';
+import { configureAudio, playSound, primeAudio } from './game/audio';
+import { pulseHaptic } from './game/haptics';
 import { applySnapshot, captureSnapshot, type MoveSnapshot } from './game/history';
+import { loadSettings, saveSettings, type GameSettings } from './game/settings';
 import {
   clearSession,
   findInProgressLevelIds,
@@ -34,12 +37,14 @@ import {
 } from './ui/controls';
 import { createHexBoard } from './ui/hexBoard';
 import { closeLevelPicker, openLevelPicker } from './ui/levelPicker';
+import { applyMotionClass, closeSettingsPanel, openSettingsPanel } from './ui/settingsPanel';
 
 export class HexClearApp {
   private state: GameState | null = null;
   private levelDef: LevelDef | null = null;
   private levelIds: number[] = [];
   private progress = loadProgress();
+  private settings = loadSettings();
   private loading = false;
   private busy = false;
   private undoSnapshot: MoveSnapshot | null = null;
@@ -49,16 +54,21 @@ export class HexClearApp {
   );
 
   async init(): Promise<void> {
+    configureAudio(this.settings);
+    applyMotionClass(this.settings.reducedMotion);
+
     bindControls({
       onRestart: () => this.handleRestart(),
       onNext: () => void this.goToLevel(this.getCurrentLevelId() + 1),
       onPrev: () => void this.goToLevel(this.getCurrentLevelId() - 1),
       onUndo: () => this.handleUndo(),
       onLevels: () => this.openLevels(),
+      onSettings: () => this.openSettings(),
     });
 
     document.addEventListener('keydown', (event) => this.handleKeydown(event));
     document.getElementById('level-meta')?.addEventListener('click', () => this.openLevels());
+    document.body.addEventListener('pointerdown', () => primeAudio(), { once: true });
 
     this.levelIds = await fetchLevelIndex();
 
@@ -95,6 +105,7 @@ export class HexClearApp {
           status: session.status,
           cells: session.cells,
           walls: session.walls,
+          holes: session.holes ?? this.levelDef.holes ?? [],
           tiles: session.tiles,
         };
       } else {
@@ -143,9 +154,14 @@ export class HexClearApp {
   private async handleTileTap(tileId: TileId): Promise<void> {
     if (!this.state || this.loading || this.busy || isWin(this.state)) return;
 
+    playSound('tap');
+    pulseHaptic(4);
+
     const result = canSlideTile(this.state, tileId);
     if (!result.ok) {
       this.board.flashBlocked(tileId);
+      playSound('blocked');
+      pulseHaptic([12, 40, 12]);
       setHint('That hex is blocked — clear the path first.');
       return;
     }
@@ -160,9 +176,14 @@ export class HexClearApp {
     this.persistSession();
     this.syncChrome();
 
+    playSound('slide');
+    pulseHaptic(6);
+
     const remaining = tilesRemaining(this.state);
     if (isWin(this.state)) {
       setHint('Board cleared!');
+      playSound('win');
+      pulseHaptic([10, 30, 10, 30, 20]);
       this.progress = unlockNextLevel(this.progress, this.state.levelId);
       saveProgress(this.progress);
       setNextEnabled(this.state.levelId < this.levelIds.length);
@@ -217,6 +238,21 @@ export class HexClearApp {
       onSelect: (levelId) => void this.goToLevel(levelId),
       onClose: () => closeLevelPicker(),
     });
+  }
+
+  private openSettings(): void {
+    openSettingsPanel({
+      settings: this.settings,
+      onChange: (settings) => this.applySettings(settings),
+      onClose: () => closeSettingsPanel(),
+    });
+  }
+
+  private applySettings(settings: GameSettings): void {
+    this.settings = settings;
+    saveSettings(settings);
+    configureAudio(settings);
+    applyMotionClass(settings.reducedMotion);
   }
 
   private handleKeydown(event: KeyboardEvent): void {

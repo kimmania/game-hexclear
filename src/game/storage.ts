@@ -31,7 +31,7 @@ export function saveProgress(progress: SavedProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
-export type SessionSnapshot = Pick<GameState, 'status' | 'cells' | 'walls' | 'tiles'>;
+export type SessionSnapshot = Pick<GameState, 'status' | 'cells' | 'walls' | 'holes' | 'tiles'>;
 
 export function saveSession(levelId: number, state: GameState): void {
   const key = `${STORAGE_KEY}:level:${levelId}`;
@@ -41,6 +41,7 @@ export function saveSession(levelId: number, state: GameState): void {
       status: state.status,
       cells: state.cells,
       walls: state.walls,
+      holes: state.holes,
       tiles: state.tiles,
     }),
   );

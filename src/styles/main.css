@@ -79,6 +79,21 @@ body {
   cursor: pointer;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  min-width: var(--btn-min);
+  min-height: var(--btn-min);
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 .status-chip {
   flex-shrink: 0;
   padding: 6px 10px;
@@ -144,6 +159,12 @@ body {
   fill: var(--cell);
   stroke: var(--cell-edge);
   stroke-width: 1.5;
+}
+
+.hex-hole {
+  fill: #0a0f18;
+  stroke: #050810;
+  stroke-width: 2;
 }
 
 .hex-wall {
@@ -300,6 +321,22 @@ body {
   width: 100%;
 }
 
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.settings-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
 .install-hint {
   display: flex;
   align-items: flex-start;
@@ -360,4 +397,8 @@ body {
   .hex-tile-shake {
     animation: none;
   }
+}
+
+.reduce-motion .hex-tile-shake {
+  animation: none;
 }

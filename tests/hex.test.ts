@@ -40,8 +40,19 @@ describe('hex math', () => {
       { q: 1, r: 0 },
       { q: 2, r: 0 },
     ]);
-    const path = slidePath({ q: 1, r: 0 }, 0, cells, new Set());
+    const path = slidePath({ q: 1, r: 0 }, 0, cells, new Set(), new Set());
     expect(path.map(coordKey)).toEqual(['1,0', '2,0', '3,0']);
+  });
+
+  it('stops at a hole and removes the tile there', () => {
+    const cells = buildCellSet([
+      { q: -1, r: 0 },
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+    ]);
+    const holes = buildCellSet([{ q: 0, r: 0 }]);
+    const path = slidePath({ q: -1, r: 0 }, 0, cells, holes, new Set());
+    expect(path.map(coordKey)).toEqual(['-1,0', '0,0']);
   });
 
   it('returns empty path when blocked immediately', () => {
@@ -50,7 +61,7 @@ describe('hex math', () => {
       { q: 1, r: 0 },
     ]);
     const blocked = new Set(['1,0']);
-    const path = slidePath({ q: 0, r: 0 }, 0, cells, blocked);
+    const path = slidePath({ q: 0, r: 0 }, 0, cells, new Set(), blocked);
     expect(path).toEqual([]);
   });
 });
@@ -82,6 +93,38 @@ describe('board rules', () => {
     expect(isWin(state)).toBe(false);
     state = applySlide(state, 'a');
     expect(isWin(state)).toBe(true);
+  });
+});
+
+describe('holes', () => {
+  const pitLevel: LevelDef = {
+    id: 100,
+    name: 'Pit',
+    cells: [
+      { q: -1, r: 0 },
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+    ],
+    holes: [{ q: 0, r: 0 }],
+    tiles: [
+      { id: 'a', q: -1, r: 0, dir: 0, color: 'coral' },
+      { id: 'b', q: 1, r: 0, dir: 3, color: 'sky' },
+    ],
+  };
+
+  it('removes a tile when it slides into a hole', () => {
+    const state = createGameState(pitLevel);
+    const result = canSlideTile(state, 'a');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.path.map(coordKey)).toEqual(['-1,0', '0,0']);
+    }
+    const next = applySlide(state, 'a');
+    expect(next.tiles.map((tile) => tile.id)).toEqual(['b']);
+  });
+
+  it('solves pit level', () => {
+    expect(solveLevel(pitLevel).solvable).toBe(true);
   });
 });
 

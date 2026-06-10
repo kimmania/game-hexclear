@@ -42,7 +42,8 @@ export function createHexBoard(
       const { x, y } = axialToPixel(cell.q, cell.r);
       const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       poly.setAttribute('points', hexPolygonPoints(x, y));
-      poly.setAttribute('class', 'hex-cell');
+      const isHole = state.holes.some((hole) => hole.q === cell.q && hole.r === cell.r);
+      poly.setAttribute('class', isHole ? 'hex-hole' : 'hex-cell');
       bg.appendChild(poly);
     }
 
@@ -100,12 +101,17 @@ export function createHexBoard(
   }
 
   function flashBlocked(tileId: TileId): void {
+    if (document.documentElement.classList.contains('reduce-motion')) return;
     const tile = svg.querySelector(`[data-tile-id="${tileId}"]`);
     tile?.classList.add('hex-tile-shake');
     window.setTimeout(() => tile?.classList.remove('hex-tile-shake'), 400);
   }
 
   function animateSlide(state: GameState, tileId: TileId, path: HexCoord[]): Promise<void> {
+    if (document.documentElement.classList.contains('reduce-motion') || path.length < 2) {
+      return Promise.resolve();
+    }
+
     animating = true;
 
     const tileEl = svg.querySelector(`[data-tile-id="${tileId}"]`) as SVGGElement | null;

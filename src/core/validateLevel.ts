@@ -57,6 +57,7 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
   }
 
   const cellKeys = new Set(level.cells.map((cell) => `${cell.q},${cell.r}`));
+  const holeKeys = new Set((level.holes ?? []).map((hole) => `${hole.q},${hole.r}`));
   const tileIds = new Set<string>();
 
   for (const tile of level.tiles) {
@@ -68,6 +69,22 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
     const key = `${tile.q},${tile.r}`;
     if (!cellKeys.has(key)) {
       throw new Error(`Tile ${tile.id} is outside the board cells`);
+    }
+    if (holeKeys.has(key)) {
+      throw new Error(`Tile ${tile.id} cannot start on a hole`);
+    }
+  }
+
+  for (const hole of level.holes ?? []) {
+    if (!isCoord(hole)) {
+      throw new Error('Invalid hole coordinate');
+    }
+    const key = `${hole.q},${hole.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Hole at ${key} is outside the board cells`);
+    }
+    if (level.walls?.some((wall) => wall.q === hole.q && wall.r === hole.r)) {
+      throw new Error(`Hole overlaps wall at ${key}`);
     }
   }
 

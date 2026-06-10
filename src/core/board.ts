@@ -14,6 +14,7 @@ export function createGameState(level: LevelDef): GameState {
     status: 'playing',
     cells: level.cells.map((cell) => ({ ...cell })),
     walls: (level.walls ?? []).map((wall) => ({ ...wall })),
+    holes: (level.holes ?? []).map((hole) => ({ ...hole })),
     tiles: level.tiles.map((tile) => ({
       id: tile.id,
       q: tile.q,
@@ -47,8 +48,9 @@ export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
   }
 
   const cells = buildCellSet(state.cells);
+  const holes = buildCellSet(state.holes);
   const blocked = occupiedKeys(state, tileId);
-  const path = slidePath({ q: tile.q, r: tile.r }, tile.dir, cells, blocked);
+  const path = slidePath({ q: tile.q, r: tile.r }, tile.dir, cells, holes, blocked);
 
   if (path.length <= 1) {
     return { ok: false, reason: 'blocked' };
@@ -86,6 +88,7 @@ export function cloneState(state: GameState): GameState {
     status: state.status,
     cells: state.cells.map((cell) => ({ ...cell })),
     walls: state.walls.map((wall) => ({ ...wall })),
+    holes: state.holes.map((hole) => ({ ...hole })),
     tiles: state.tiles.map((tile) => ({ ...tile })),
   };
 }

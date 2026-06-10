@@ -9,7 +9,17 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 1. **Tap a hex tile** to slide it in the direction its arrow points.
 2. The tile moves along that line until it **leaves the board**.
 3. If another tile or wall is in the way, the move is **blocked**.
-4. **Clear every hex** to win the level.
+4. **Holes** in the board swallow any tile that slides over them.
+5. **Clear every hex** to win the level.
+
+## Features
+
+- 16 puzzle levels with progressive difficulty (walls from level 9, holes from level 16)
+- Level picker, unlock progress, and in-progress save per level
+- Undo (button or ⌘/Ctrl+Z)
+- Settings: sound effects and reduce motion
+- Light haptic feedback on supported phones
+- Installable PWA with offline play
 
 ## Development
 
@@ -29,6 +39,19 @@ Open the URL from the terminal (usually `http://localhost:5173/game-hexclear/`).
 | `npm test` | Run unit tests |
 | `npm run validate-levels` | BFS solvability check for every level |
 | `npm run generate-icons` | Regenerate PNG icons from `public/icons/icon.svg` |
+| `npm run lighthouse` | Build + preview, then run Lighthouse (mobile) |
+
+## Lighthouse (quality check)
+
+```bash
+npm run build
+npm run preview
+# In another terminal:
+npx lighthouse http://localhost:4173/game-hexclear/ \
+  --form-factor=mobile \
+  --chrome-flags="--headless=new" \
+  --view
+```
 
 ## Levels
 

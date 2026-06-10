@@ -4,12 +4,14 @@ export function bindControls(handlers: {
   onPrev: () => void;
   onUndo: () => void;
   onLevels: () => void;
+  onSettings: () => void;
 }): void {
   document.getElementById('restart')?.addEventListener('click', handlers.onRestart);
   document.getElementById('next-level')?.addEventListener('click', handlers.onNext);
   document.getElementById('prev-level')?.addEventListener('click', handlers.onPrev);
   document.getElementById('undo')?.addEventListener('click', handlers.onUndo);
   document.getElementById('levels-btn')?.addEventListener('click', handlers.onLevels);
+  document.getElementById('settings-btn')?.addEventListener('click', handlers.onSettings);
 }
 
 export function updateHeader(levelName: string, levelId: number, total: number): void {

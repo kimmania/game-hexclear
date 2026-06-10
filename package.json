@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "validate-levels": "tsx scripts/validate-levels.ts",
-    "generate-icons": "tsx scripts/generate-icons.ts"
+    "generate-icons": "tsx scripts/generate-icons.ts",
+    "lighthouse": "npm run build && vite preview --port 4173 --strictPort"
   },
   "engines": {
     "node": ">=22"
