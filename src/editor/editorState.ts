@@ -15,7 +15,6 @@ export type EditorDraft = {
 
 export type TilePlacementOptions = {
   frozen?: boolean;
-  chain?: number;
 };
 
 export const TILE_COLOR_OPTIONS: TileColor[] = [
@@ -169,9 +168,6 @@ export function addOrCycleTile(
   };
   if (options.frozen) {
     tile.frozen = true;
-  }
-  if (options.chain !== undefined && options.chain > 0) {
-    tile.chain = options.chain;
   }
   draft.tiles.push(tile);
 }

@@ -1,6 +1,7 @@
 {
-  "id": 15,
-  "name": "Grand clear",
+  "id": 27,
+  "name": "Grand tempest",
+  "par": 10,
   "cells": [
     {
       "q": 0,
@@ -112,8 +113,8 @@
       "q": 0,
       "r": 0,
       "dir": 3,
-      "color": "gold"
+      "color": "gold",
+      "frozen": true
     }
-  ],
-  "par": 10
+  ]
 }

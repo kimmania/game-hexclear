@@ -56,7 +56,6 @@ export async function bootstrapEditor(): Promise<void> {
   let tool: EditorTool = 'cell';
   let tileColor: TileColor = 'coral';
   let tileFrozen = false;
-  let tileChain = 0;
 
   app.innerHTML = '';
   app.className = 'editor-app';
@@ -125,22 +124,6 @@ export async function bootstrapEditor(): Promise<void> {
   });
   frozenLabel.append(frozenCheck, document.createTextNode(' Frozen'));
 
-  const chainLabel = document.createElement('label');
-  chainLabel.className = 'editor-color-label';
-  chainLabel.textContent = 'Chain';
-  const chainInput = document.createElement('input');
-  chainInput.type = 'number';
-  chainInput.min = '0';
-  chainInput.max = '9';
-  chainInput.value = '0';
-  chainInput.className = 'editor-field editor-chain-input';
-  chainInput.setAttribute('aria-label', 'Chain order for new tiles');
-  chainInput.addEventListener('change', () => {
-    tileChain = Math.max(0, Math.min(9, Math.floor(Number(chainInput.value)) || 0));
-    chainInput.value = String(tileChain);
-  });
-  chainLabel.append(chainInput);
-
   const clearBtn = document.createElement('button');
   clearBtn.type = 'button';
   clearBtn.className = 'btn';
@@ -155,7 +138,7 @@ export async function bootstrapEditor(): Promise<void> {
   });
 
   colorLabel.append(colorSelect);
-  optionsBar.append(colorLabel, frozenLabel, chainLabel, clearBtn);
+  optionsBar.append(colorLabel, frozenLabel, clearBtn);
 
   const hint = document.createElement('p');
   hint.className = 'hint editor-hint';
@@ -256,7 +239,6 @@ export async function bootstrapEditor(): Promise<void> {
   const board = createEditorBoard(boardInner, (coord) => {
     applyTool(draft, tool, coord, tileColor, {
       frozen: tileFrozen,
-      chain: tileChain > 0 ? tileChain : undefined,
     });
     render();
   });
@@ -269,7 +251,6 @@ export async function bootstrapEditor(): Promise<void> {
     hint.textContent = TOOL_HINTS[tool];
     colorSelect.disabled = tool !== 'tile';
     frozenCheck.disabled = tool !== 'tile';
-    chainInput.disabled = tool !== 'tile';
     render();
   }
 

@@ -2,17 +2,63 @@
   "id": 12,
   "name": "Switchback",
   "cells": [
-    { "q": 0, "r": 0 },
-    { "q": 1, "r": 0 },
-    { "q": 2, "r": 0 },
-    { "q": 0, "r": 1 },
-    { "q": 1, "r": 1 }
+    {
+      "q": 0,
+      "r": 0
+    },
+    {
+      "q": 1,
+      "r": 0
+    },
+    {
+      "q": 2,
+      "r": 0
+    },
+    {
+      "q": 0,
+      "r": 1
+    },
+    {
+      "q": 1,
+      "r": 1
+    }
   ],
   "tiles": [
-    { "id": "t1", "q": 2, "r": 0, "dir": 0, "color": "sky" },
-    { "id": "t2", "q": 1, "r": 0, "dir": 0, "color": "coral" },
-    { "id": "t3", "q": 1, "r": 1, "dir": 2, "color": "mint" },
-    { "id": "t4", "q": 0, "r": 1, "dir": 2, "color": "gold" },
-    { "id": "t5", "q": 0, "r": 0, "dir": 0, "color": "lavender" }
-  ]
+    {
+      "id": "t1",
+      "q": 2,
+      "r": 0,
+      "dir": 0,
+      "color": "sky"
+    },
+    {
+      "id": "t2",
+      "q": 1,
+      "r": 0,
+      "dir": 0,
+      "color": "coral"
+    },
+    {
+      "id": "t3",
+      "q": 1,
+      "r": 1,
+      "dir": 2,
+      "color": "mint"
+    },
+    {
+      "id": "t4",
+      "q": 0,
+      "r": 1,
+      "dir": 2,
+      "color": "gold"
+    },
+    {
+      "id": "t5",
+      "q": 0,
+      "r": 0,
+      "dir": 0,
+      "color": "lavender"
+    }
+  ],
+  "par": 5
 }

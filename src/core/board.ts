@@ -16,7 +16,6 @@ function copyTile(tile: TileState): TileState {
     dir: tile.dir,
     color: tile.color,
     ...(tile.frozen ? { frozen: true } : {}),
-    ...(tile.chain !== undefined ? { chain: tile.chain } : {}),
   };
 }
 
@@ -35,7 +34,6 @@ export function createGameState(level: LevelDef): GameState {
       dir: tile.dir,
       color: tile.color,
       ...(tile.frozen ? { frozen: true } : {}),
-      ...(tile.chain !== undefined ? { chain: tile.chain } : {}),
     })),
     moveCount: 0,
     ...(level.par !== undefined ? { par: level.par } : {}),
@@ -69,19 +67,8 @@ export function isFrozenLocked(state: GameState, tile: TileState): boolean {
   return tile.frozen === true && hasAdjacentTile(state, tile);
 }
 
-export function isChainLocked(state: GameState, tile: TileState): boolean {
-  if (tile.chain === undefined) return false;
-  return state.tiles.some(
-    (other) =>
-      other.id !== tile.id &&
-      other.chain !== undefined &&
-      other.chain < tile.chain!,
-  );
-}
-
 export function slideBlockReason(state: GameState, tile: TileState): SlideBlockReason | null {
   if (isFrozenLocked(state, tile)) return 'frozen';
-  if (isChainLocked(state, tile)) return 'chain';
 
   const cells = buildCellSet(state.cells);
   const holes = buildCellSet(state.holes);
@@ -173,8 +160,6 @@ export function hintForBlockReason(reason: SlideBlockReason): string {
   switch (reason) {
     case 'frozen':
       return 'That hex is frozen — clear its neighbors first.';
-    case 'chain':
-      return 'Clear lower-chain tiles before this one.';
     case 'blocked':
       return 'That hex is blocked — clear the path first.';
     default:

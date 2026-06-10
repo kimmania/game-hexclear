@@ -22,8 +22,6 @@ export type TileDef = {
   color: TileColor;
   /** Cannot slide while a tile occupies an adjacent hex. */
   frozen?: boolean;
-  /** Lower numbers must be cleared before this tile can slide. */
-  chain?: number;
 };
 
 export type LevelDef = {
@@ -44,7 +42,6 @@ export type TileState = {
   dir: HexDirection;
   color: TileColor;
   frozen?: boolean;
-  chain?: number;
 };
 
 export type GameStatus = 'playing' | 'won';
@@ -61,7 +58,7 @@ export type GameState = {
   par?: number;
 };
 
-export type SlideBlockReason = 'blocked' | 'missing' | 'finished' | 'frozen' | 'chain';
+export type SlideBlockReason = 'blocked' | 'missing' | 'finished' | 'frozen';
 
 export type SlideResult =
   | { ok: true; path: HexCoord[] }

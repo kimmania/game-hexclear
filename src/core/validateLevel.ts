@@ -36,12 +36,6 @@ function isTile(value: unknown): boolean {
   if (value.frozen !== undefined && typeof value.frozen !== 'boolean') {
     return false;
   }
-  if (
-    value.chain !== undefined &&
-    (typeof value.chain !== 'number' || !Number.isInteger(value.chain) || value.chain < 1)
-  ) {
-    return false;
-  }
   return true;
 }
 

@@ -123,34 +123,6 @@ describe('frozen tiles', () => {
   });
 });
 
-describe('chain tiles', () => {
-  const chainLevel: LevelDef = {
-    id: 102,
-    name: 'Chain',
-    cells: [
-      { q: 0, r: 0 },
-      { q: 1, r: 0 },
-      { q: 2, r: 0 },
-      { q: 0, r: 1 },
-    ],
-    tiles: [
-      { id: 'a', q: 0, r: 0, dir: 0, color: 'coral', chain: 1 },
-      { id: 'b', q: 1, r: 0, dir: 0, color: 'sky', chain: 1 },
-      { id: 'c', q: 0, r: 1, dir: 4, color: 'mint', chain: 2 },
-    ],
-  };
-
-  it('blocks higher chain tiles until lower chains are gone', () => {
-    const state = createGameState(chainLevel);
-    expect(canSlideTile(state, 'c').ok).toBe(false);
-    expect(canSlideTile(state, 'b').ok).toBe(true);
-  });
-
-  it('solves chain level', () => {
-    expect(solveLevel(chainLevel).solvable).toBe(true);
-  });
-});
-
 describe('par', () => {
   it('stores par on game state', () => {
     const level: LevelDef = {

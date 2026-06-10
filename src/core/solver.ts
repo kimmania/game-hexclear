@@ -15,8 +15,7 @@ export function stateKey(state: GameState): string {
   const tiles = state.tiles
     .map((tile) => {
       const frozen = tile.frozen ? 'f' : '';
-      const chain = tile.chain ?? '';
-      return `${tile.id}@${tile.q},${tile.r}:${tile.dir}${frozen}${chain}`;
+      return `${tile.id}@${tile.q},${tile.r}:${tile.dir}${frozen}`;
     })
     .sort()
     .join('|');

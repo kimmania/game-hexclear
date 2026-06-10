@@ -1,4 +1,4 @@
-import { canSlideTile, isChainLocked, isFrozenLocked } from '../core/board';
+import { canSlideTile, isFrozenLocked } from '../core/board';
 import type { GameState, HexCoord, TileId, TileState } from '../core/types';
 import {
   HEX_RADIUS,
@@ -24,25 +24,7 @@ function appendTileMarkers(
     group.appendChild(frost);
   }
 
-  if (tile.chain !== undefined) {
-    const badge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    badge.setAttribute('cx', String(x + HEX_RADIUS * 0.42));
-    badge.setAttribute('cy', String(y - HEX_RADIUS * 0.42));
-    badge.setAttribute('r', '9');
-    badge.setAttribute('class', 'hex-chain-badge');
-    group.appendChild(badge);
-
-    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', String(x + HEX_RADIUS * 0.42));
-    label.setAttribute('y', String(y - HEX_RADIUS * 0.42 + 4));
-    label.setAttribute('class', 'hex-chain-label');
-    label.setAttribute('text-anchor', 'middle');
-    label.textContent = String(tile.chain);
-    group.appendChild(label);
-  }
-
-  const locked = isFrozenLocked(state, tile) || isChainLocked(state, tile);
-  if (locked) {
+  if (isFrozenLocked(state, tile)) {
     group.classList.add('hex-tile-locked');
   }
 }
