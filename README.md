@@ -16,11 +16,12 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 7. **One-way walls** (from level 31) block entry from a single direction — the orange chevron shows which slides are stopped.
 8. **Rotators** (from level 32) spin a tile's direction when it passes through the marked cell.
 9. **Linked pairs** (from level 33) move together — tap either tile to slide both in that tile's direction.
-10. **Clear every hex** to win the level. Beat **par** for a perfect score.
+10. **Teleporters** (level 34), **toggle gates** (35), **crumbling paths** (36), **push crates** (37), **splitters** (38), and **magnets** (39) extend routing and timing puzzles.
+11. **Clear every hex** to win the level. Beat **par** for a perfect score.
 
 ## Features
 
-- 33 puzzle levels with progressive difficulty (frozen from level 6, walls from 11, holes from 18, one-way / rotator / linked from 31–33)
+- 39 puzzle levels with progressive difficulty (frozen from level 6, walls from 11, holes from 18; advanced mechanics from 31–39)
 - Move counter and par targets on advanced levels; best scores saved locally
 - Level picker, unlock progress, and in-progress save per level
 - Settings: sound effects and reduce motion
@@ -35,7 +36,7 @@ npm run generate-icons
 npm run dev
 ```
 
-Open the URL from the terminal (usually `http://localhost:5173/game-hexclear/`).
+Open the URL from the terminal (usually `http://localhost:5174/game-hexclear/`).
 
 | Command | Description |
 |---------|-------------|

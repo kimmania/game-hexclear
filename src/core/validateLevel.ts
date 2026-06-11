@@ -193,4 +193,88 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
     }
     rotatorKeys.add(key);
   }
+
+  const teleporterGroups = new Map<string, number>();
+  for (const teleporter of level.teleporters ?? []) {
+    if (!isRecord(teleporter) || typeof teleporter.group !== 'string') {
+      throw new Error('Invalid teleporter definition');
+    }
+    if (!isCoord(teleporter)) {
+      throw new Error('Invalid teleporter coordinate');
+    }
+    const key = `${teleporter.q},${teleporter.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Teleporter at ${key} is outside the board cells`);
+    }
+    teleporterGroups.set(teleporter.group, (teleporterGroups.get(teleporter.group) ?? 0) + 1);
+  }
+  for (const [group, count] of teleporterGroups) {
+    if (count !== 2) {
+      throw new Error(`Teleporter group "${group}" must have exactly 2 portals (found ${count})`);
+    }
+  }
+
+  for (const gate of level.toggleGates ?? []) {
+    if (
+      !isRecord(gate) ||
+      !isCoord({ q: gate.switchQ, r: gate.switchR }) ||
+      !isCoord({ q: gate.gateQ, r: gate.gateR })
+    ) {
+      throw new Error('Invalid toggle gate definition');
+    }
+    const switchKey = `${gate.switchQ},${gate.switchR}`;
+    const gateKey = `${gate.gateQ},${gate.gateR}`;
+    if (!cellKeys.has(switchKey)) {
+      throw new Error(`Toggle switch at ${switchKey} is outside the board cells`);
+    }
+    if (!cellKeys.has(gateKey)) {
+      throw new Error(`Toggle gate at ${gateKey} is outside the board cells`);
+    }
+  }
+
+  for (const cell of level.crumbling ?? []) {
+    if (!isCoord(cell)) throw new Error('Invalid crumbling cell');
+    const key = `${cell.q},${cell.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Crumbling cell at ${key} is outside the board cells`);
+    }
+  }
+
+  const crateIds = new Set<string>();
+  for (const crate of level.crates ?? []) {
+    if (
+      !isRecord(crate) ||
+      typeof crate.id !== 'string' ||
+      !isCoord(crate)
+    ) {
+      throw new Error('Invalid crate definition');
+    }
+    if (crateIds.has(crate.id)) {
+      throw new Error(`Duplicate crate id: ${crate.id}`);
+    }
+    crateIds.add(crate.id);
+    const key = `${crate.q},${crate.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Crate ${crate.id} is outside the board cells`);
+    }
+    if (level.tiles.some((tile) => tile.q === crate.q && tile.r === crate.r)) {
+      throw new Error(`Crate overlaps tile at ${key}`);
+    }
+  }
+
+  for (const cell of level.splitters ?? []) {
+    if (!isCoord(cell)) throw new Error('Invalid splitter cell');
+    const key = `${cell.q},${cell.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Splitter at ${key} is outside the board cells`);
+    }
+  }
+
+  for (const cell of level.magnets ?? []) {
+    if (!isCoord(cell)) throw new Error('Invalid magnet cell');
+    const key = `${cell.q},${cell.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Magnet at ${key} is outside the board cells`);
+    }
+  }
 }

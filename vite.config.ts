@@ -3,6 +3,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '/game-hexclear/',
+  server: {
+    port: 5174,
+    strictPort: true,
+  },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',

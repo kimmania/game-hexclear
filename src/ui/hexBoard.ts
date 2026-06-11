@@ -1,4 +1,5 @@
 import { canSlideTile, isFrozenLocked } from '../core/board';
+import { coordKey } from '../core/hex';
 import {
   DIRECTION_LABELS,
   DIRECTION_SHORT,
@@ -15,6 +16,13 @@ import {
   createDirectionArrow,
   createOneWayWallMarker,
   createRotatorMarker,
+  createTeleporterMarker,
+  createToggleSwitchMarker,
+  createClosedGateMarker,
+  createCrumblingMarker,
+  createSplitterMarker,
+  createMagnetMarker,
+  createCrateMarker,
   hexPolygonPoints,
 } from './hexLayout';
 
@@ -70,6 +78,7 @@ export type HexBoard = {
   svg: SVGSVGElement;
   render: (state: GameState, options?: BoardRenderOptions) => void;
   animateSlides: (state: GameState, animations: SlideAnimation[]) => Promise<void>;
+  animateBounce: (state: GameState, animations: SlideAnimation[]) => Promise<void>;
   flashBlocked: (tileId: TileId) => void;
   highlightTile: (tileId: TileId | null) => void;
   focusTile: (tileId: TileId | null) => void;
@@ -242,8 +251,16 @@ export function createHexBoard(
       const { x, y } = axialToPixel(cell.q, cell.r);
       const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       poly.setAttribute('points', hexPolygonPoints(x, y));
+      const key = coordKey(cell);
       const isHole = state.holes.some((hole) => hole.q === cell.q && hole.r === cell.r);
-      poly.setAttribute('class', isHole ? 'hex-hole' : 'hex-cell');
+      const isCrumbled = state.crumbledKeys.includes(key);
+      if (isCrumbled) {
+        poly.setAttribute('class', 'hex-cell hex-cell-crumbled');
+      } else if (isHole) {
+        poly.setAttribute('class', 'hex-hole');
+      } else {
+        poly.setAttribute('class', 'hex-cell');
+      }
       bg.appendChild(poly);
     }
 
@@ -261,6 +278,36 @@ export function createHexBoard(
 
     for (const rotator of state.rotators) {
       bg.appendChild(createRotatorMarker(rotator.q, rotator.r));
+    }
+
+    for (const teleporter of state.teleporters) {
+      bg.appendChild(createTeleporterMarker(teleporter.q, teleporter.r, teleporter.group));
+    }
+
+    for (const gate of state.toggleGates) {
+      bg.appendChild(createToggleSwitchMarker(gate.switchQ, gate.switchR));
+    }
+    state.toggleGates.forEach((gate, index) => {
+      if (!state.gateOpen[index]) {
+        bg.appendChild(createClosedGateMarker(gate.gateQ, gate.gateR));
+      }
+    });
+
+    for (const cell of state.crumbling) {
+      const key = coordKey(cell);
+      bg.appendChild(createCrumblingMarker(cell.q, cell.r, state.crumbledKeys.includes(key)));
+    }
+
+    for (const cell of state.splitters) {
+      bg.appendChild(createSplitterMarker(cell.q, cell.r));
+    }
+
+    for (const cell of state.magnets) {
+      bg.appendChild(createMagnetMarker(cell.q, cell.r));
+    }
+
+    for (const crate of state.crates) {
+      bg.appendChild(createCrateMarker(crate.q, crate.r));
     }
 
     const linkLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -411,10 +458,35 @@ export function createHexBoard(
       });
   }
 
+  function animateBounce(state: GameState, animations: SlideAnimation[]): Promise<void> {
+    if (document.documentElement.classList.contains('reduce-motion')) {
+      return Promise.resolve();
+    }
+
+    animating = true;
+    return Promise.all(
+      animations.map(async (entry) => {
+        if (entry.path.length < 2) return;
+        await animateOneSlide(state, entry.tileId, entry.path);
+        await animateOneSlide(state, entry.tileId, [...entry.path].reverse());
+      }),
+    )
+      .then(() => {
+        animating = false;
+        if (latestState) {
+          render(latestState, latestRenderOptions);
+        }
+      })
+      .catch(() => {
+        animating = false;
+      });
+  }
+
   return {
     svg,
     render,
     animateSlides,
+    animateBounce,
     flashBlocked,
     highlightTile,
     focusTile,

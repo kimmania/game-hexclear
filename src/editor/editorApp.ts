@@ -19,6 +19,7 @@ import {
   createEmptyDraft,
   draftFromLevel,
   type EditorDraft,
+  type EditorPending,
   type EditorTool,
 } from './editorState';
 import { COLOR_BY_DIRECTION, DIRECTION_LABELS } from '../core/tileColors';
@@ -37,6 +38,12 @@ const TOOL_HINTS: Record<EditorTool, string> = {
   oneway: 'Tap a cell to add a one-way barrier; tap again to rotate, then remove.',
   rotator: 'Tap a cell to toggle a rotator (turns sliding tiles clockwise).',
   link: 'Tap one tile, then a second to link them as a sticky pair. Tap same tile to cancel.',
+  teleporter: 'Tap a cell to toggle a portal (group a). Add a matching pair on another cell.',
+  toggle: 'Tap the switch cell, then the gate cell to link them.',
+  crumble: 'Tap a cell to toggle a crumbling bridge hex.',
+  crate: 'Tap a cell to toggle a pushable crate.',
+  splitter: 'Tap a cell to toggle a splitter (breaks linked pairs).',
+  magnet: 'Tap a cell to toggle a magnet pole.',
   erase: 'Tap a cell to remove it and anything on it.',
 };
 
@@ -69,7 +76,7 @@ export async function bootstrapEditor(): Promise<void> {
   const draft = await loadInitialDraft();
   let tool: EditorTool = 'cell';
   let tileFrozen = false;
-  let linkPendingId: string | null = null;
+  let editorPending: EditorPending = { linkTileId: null, toggleSwitch: null };
 
   app.innerHTML = '';
   app.className = 'editor-app';
@@ -97,6 +104,12 @@ export async function bootstrapEditor(): Promise<void> {
     { id: 'oneway', label: 'One-way' },
     { id: 'rotator', label: 'Rotator' },
     { id: 'link', label: 'Link' },
+    { id: 'teleporter', label: 'Portal' },
+    { id: 'toggle', label: 'Gate' },
+    { id: 'crumble', label: 'Crumble' },
+    { id: 'crate', label: 'Crate' },
+    { id: 'splitter', label: 'Split' },
+    { id: 'magnet', label: 'Magnet' },
     { id: 'erase', label: 'Erase' },
   ];
 
@@ -135,7 +148,13 @@ export async function bootstrapEditor(): Promise<void> {
     draft.holes = [];
     draft.oneWayWalls = [];
     draft.rotators = [];
-    linkPendingId = null;
+    draft.teleporters = [];
+    draft.toggleGates = [];
+    draft.crumbling = [];
+    draft.crates = [];
+    draft.splitters = [];
+    draft.magnets = [];
+    editorPending = { linkTileId: null, toggleSwitch: null };
     render();
   });
 
@@ -373,28 +392,28 @@ export async function bootstrapEditor(): Promise<void> {
   app.append(header, toolbar, optionsBar, generatePanel, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
-    linkPendingId = applyTool(
-      draft,
-      tool,
-      coord,
-      { frozen: tileFrozen },
-      linkPendingId,
-    );
+    editorPending = applyTool(draft, tool, coord, { frozen: tileFrozen }, editorPending);
     render();
   });
 
   function selectTool(next: EditorTool): void {
     tool = next;
-    if (next !== 'link') {
-      linkPendingId = null;
+    if (next !== 'link' && next !== 'toggle') {
+      editorPending = { linkTileId: null, toggleSwitch: null };
+    } else if (next === 'link') {
+      editorPending = { ...editorPending, toggleSwitch: null };
+    } else if (next === 'toggle') {
+      editorPending = { ...editorPending, linkTileId: null };
     }
     for (const [id, btn] of toolButtons) {
       btn.classList.toggle('editor-tool-active', id === tool);
     }
     hint.textContent =
-      tool === 'link' && linkPendingId
-        ? `${TOOL_HINTS.link} Selected ${linkPendingId} — tap partner.`
-        : TOOL_HINTS[tool];
+      tool === 'link' && editorPending.linkTileId
+        ? `${TOOL_HINTS.link} Selected ${editorPending.linkTileId} — tap partner.`
+        : tool === 'toggle' && editorPending.toggleSwitch
+          ? `${TOOL_HINTS.toggle} Switch at ${editorPending.toggleSwitch.q},${editorPending.toggleSwitch.r} — tap gate.`
+          : TOOL_HINTS[tool];
     frozenCheck.disabled = tool !== 'tile';
     render();
   }

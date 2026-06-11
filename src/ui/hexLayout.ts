@@ -158,3 +158,126 @@ export function createRotatorMarker(q: number, r: number): SVGGElement {
 
   return group;
 }
+
+export function createTeleporterMarker(q: number, r: number, group: string): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'hex-teleporter');
+  g.setAttribute('transform', `translate(${cx} ${cy})`);
+  g.setAttribute('pointer-events', 'none');
+
+  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ring.setAttribute('r', '16');
+  ring.setAttribute('class', 'hex-teleporter-ring');
+  g.appendChild(ring);
+
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('class', 'hex-teleporter-label');
+  label.setAttribute('x', '0');
+  label.setAttribute('y', '5');
+  label.setAttribute('text-anchor', 'middle');
+  label.textContent = group.slice(0, 1).toUpperCase();
+  g.appendChild(label);
+
+  return g;
+}
+
+export function createToggleSwitchMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'hex-toggle-switch');
+  g.setAttribute('transform', `translate(${cx} ${cy})`);
+  g.setAttribute('pointer-events', 'none');
+
+  const plate = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  plate.setAttribute('x', '-10');
+  plate.setAttribute('y', '-6');
+  plate.setAttribute('width', '20');
+  plate.setAttribute('height', '12');
+  plate.setAttribute('rx', '3');
+  plate.setAttribute('class', 'hex-toggle-plate');
+  g.appendChild(plate);
+
+  const lever = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  lever.setAttribute('cx', '0');
+  lever.setAttribute('cy', '0');
+  lever.setAttribute('r', '5');
+  lever.setAttribute('class', 'hex-toggle-lever');
+  g.appendChild(lever);
+
+  return g;
+}
+
+export function createClosedGateMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  poly.setAttribute('points', hexPolygonPoints(cx, cy, HEX_RADIUS - 4));
+  poly.setAttribute('class', 'hex-toggle-gate');
+  poly.setAttribute('pointer-events', 'none');
+  return poly;
+}
+
+export function createCrumblingMarker(q: number, r: number, crumbled: boolean): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', crumbled ? 'hex-crumble hex-crumble-gone' : 'hex-crumble');
+  g.setAttribute('transform', `translate(${cx} ${cy})`);
+  g.setAttribute('pointer-events', 'none');
+
+  const crack = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  crack.setAttribute('d', crumbled ? 'M -12 -4 L 0 6 L 12 -2' : 'M -10 0 L 0 -8 L 10 2');
+  crack.setAttribute('class', 'hex-crumble-crack');
+  g.appendChild(crack);
+
+  return g;
+}
+
+export function createSplitterMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'hex-splitter');
+  g.setAttribute('transform', `translate(${cx} ${cy})`);
+  g.setAttribute('pointer-events', 'none');
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M 0 -12 L 0 0 M -10 8 L 0 0 L 10 8');
+  path.setAttribute('class', 'hex-splitter-fork');
+  g.appendChild(path);
+
+  return g;
+}
+
+export function createMagnetMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'hex-magnet');
+  g.setAttribute('transform', `translate(${cx} ${cy})`);
+  g.setAttribute('pointer-events', 'none');
+
+  const north = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  north.setAttribute('x', '-8');
+  north.setAttribute('y', '-14');
+  north.setAttribute('width', '16');
+  north.setAttribute('height', '8');
+  north.setAttribute('class', 'hex-magnet-n');
+  g.appendChild(north);
+
+  const south = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  south.setAttribute('x', '-8');
+  south.setAttribute('y', '6');
+  south.setAttribute('width', '16');
+  south.setAttribute('height', '8');
+  south.setAttribute('class', 'hex-magnet-s');
+  g.appendChild(south);
+
+  return g;
+}
+
+export function createCrateMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  poly.setAttribute('points', hexPolygonPoints(cx, cy, HEX_RADIUS - 6));
+  poly.setAttribute('class', 'hex-crate');
+  poly.setAttribute('pointer-events', 'none');
+  return poly;
+}

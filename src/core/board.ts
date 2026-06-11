@@ -1,17 +1,17 @@
+import { coordKey } from './hex';
 import {
-  AXIAL_DIRS,
-  buildCellSet,
-  coordKey,
-  simulateSlide,
-  type SlideMechanics,
-} from './hex';
+  applyMagnetPull,
+  buildSlideContext,
+  collectCratesFromContext,
+  simulateEntitySlide,
+  simulatePairSlide,
+  slideCompletes,
+} from './slideEngine';
 import type {
   GameState,
   HexCoord,
-  HexDirection,
   LevelDef,
-  OneWayWallDef,
-  RotatorDef,
+  SlideAnimation,
   SlideBlockReason,
   SlideResult,
   TileId,
@@ -39,6 +39,11 @@ export function createGameState(level: LevelDef): GameState {
     holes: (level.holes ?? []).map((hole) => ({ ...hole })),
     oneWayWalls: (level.oneWayWalls ?? []).map((wall) => ({ ...wall })),
     rotators: (level.rotators ?? []).map((rotator) => ({ ...rotator })),
+    teleporters: (level.teleporters ?? []).map((teleporter) => ({ ...teleporter })),
+    toggleGates: (level.toggleGates ?? []).map((gate) => ({ ...gate })),
+    crumbling: (level.crumbling ?? []).map((cell) => ({ ...cell })),
+    splitters: (level.splitters ?? []).map((cell) => ({ ...cell })),
+    magnets: (level.magnets ?? []).map((cell) => ({ ...cell })),
     tiles: level.tiles.map((tile) => ({
       id: tile.id,
       q: tile.q,
@@ -47,35 +52,24 @@ export function createGameState(level: LevelDef): GameState {
       ...(tile.frozen ? { frozen: true } : {}),
       ...(tile.linked ? { linked: tile.linked } : {}),
     })),
+    crates: (level.crates ?? []).map((crate) => ({ ...crate })),
+    crumbledKeys: [],
+    gateOpen: (level.toggleGates ?? []).map((gate) => gate.open === true),
     moveCount: 0,
     ...(level.par !== undefined ? { par: level.par } : {}),
   };
 }
 
-function occupiedKeys(state: GameState, ignoreTileIds: Set<TileId> = new Set()): Set<string> {
-  const keys = new Set<string>();
-  for (const tile of state.tiles) {
-    if (ignoreTileIds.has(tile.id)) continue;
-    keys.add(coordKey(tile));
-  }
-  for (const wall of state.walls) {
-    keys.add(coordKey(wall));
-  }
-  return keys;
-}
-
-function slideMechanics(state: GameState, ignoreTileIds: Set<TileId>): SlideMechanics {
-  return {
-    cells: buildCellSet(state.cells),
-    holes: buildCellSet(state.holes),
-    blocked: occupiedKeys(state, ignoreTileIds),
-    oneWayWalls: state.oneWayWalls,
-    rotators: state.rotators,
-  };
-}
-
 export function hasAdjacentTile(state: GameState, tile: TileState): boolean {
-  for (const delta of AXIAL_DIRS) {
+  const deltas = [
+    { q: 1, r: 0 },
+    { q: 1, r: -1 },
+    { q: 0, r: -1 },
+    { q: -1, r: 0 },
+    { q: -1, r: 1 },
+    { q: 0, r: 1 },
+  ];
+  for (const delta of deltas) {
     const nq = tile.q + delta.q;
     const nr = tile.r + delta.r;
     if (state.tiles.some((other) => other.id !== tile.id && other.q === nq && other.r === nr)) {
@@ -96,114 +90,57 @@ function findLinkedPartner(state: GameState, tile: TileState): TileState | undef
   return partner;
 }
 
-function oneWayKey(q: number, r: number, dir: HexDirection): string {
-  return `${q},${r}:${dir}`;
+type SlideComputation = {
+  ok: true;
+  path: HexCoord[];
+  animations: SlideAnimation[];
+  ctx: ReturnType<typeof buildSlideContext>;
+  unlinkedTileIds: string[];
+};
+
+type SlideFailure = {
+  ok: false;
+  reason: SlideBlockReason;
+  bounceAnimations?: SlideAnimation[];
+};
+
+function blockedFailure(
+  reason: SlideBlockReason,
+  bounceAnimations?: SlideAnimation[],
+): SlideFailure {
+  return { ok: false, reason, bounceAnimations };
 }
 
-function buildOneWaySet(oneWayWalls: OneWayWallDef[]): Set<string> {
-  return new Set(oneWayWalls.map((wall) => oneWayKey(wall.q, wall.r, wall.dir)));
-}
-
-function rotatorAt(rotators: RotatorDef[], coord: HexCoord): RotatorDef | undefined {
-  return rotators.find((entry) => entry.q === coord.q && entry.r === coord.r);
-}
-
-function applyTurn(dir: HexDirection, turn: 1 | -1 | 2): HexDirection {
-  const steps = turn === -1 ? 5 : turn;
-  return ((dir + steps) % 6) as HexDirection;
-}
-
-function simulatePairSlide(
-  leaderStart: HexCoord,
-  partnerStart: HexCoord,
-  slideDir: HexDirection,
-  mechanics: SlideMechanics,
-): { leaderPath: HexCoord[]; partnerPath: HexCoord[]; removed: boolean } {
-  const oneWays = buildOneWaySet(mechanics.oneWayWalls);
-  const leaderPath: HexCoord[] = [leaderStart];
-  const partnerPath: HexCoord[] = [partnerStart];
-  let leader = leaderStart;
-  let partner = partnerStart;
-  let dir = slideDir;
-
-  while (true) {
-    const nextLeader = { q: leader.q + AXIAL_DIRS[dir].q, r: leader.r + AXIAL_DIRS[dir].r };
-    const nextPartner = { q: partner.q + AXIAL_DIRS[dir].q, r: partner.r + AXIAL_DIRS[dir].r };
-
-    for (const next of [nextLeader, nextPartner]) {
-      if (oneWays.has(oneWayKey(next.q, next.r, dir))) {
-        return {
-          leaderPath: leaderPath.length === 1 ? [] : leaderPath,
-          partnerPath: partnerPath.length === 1 ? [] : partnerPath,
-          removed: false,
-        };
-      }
-    }
-
-    for (const next of [nextLeader, nextPartner]) {
-      const nextKey = coordKey(next);
-      if (mechanics.holes.has(nextKey)) {
-        leaderPath.push(nextLeader);
-        partnerPath.push(nextPartner);
-        return { leaderPath, partnerPath, removed: true };
-      }
-    }
-
-    for (const next of [nextLeader, nextPartner]) {
-      const nextKey = coordKey(next);
-      if (!mechanics.cells.has(nextKey)) {
-        leaderPath.push(nextLeader);
-        partnerPath.push(nextPartner);
-        return { leaderPath, partnerPath, removed: true };
-      }
-    }
-
-    for (const next of [nextLeader, nextPartner]) {
-      if (mechanics.blocked.has(coordKey(next))) {
-        return {
-          leaderPath: leaderPath.length === 1 ? [] : leaderPath,
-          partnerPath: partnerPath.length === 1 ? [] : partnerPath,
-          removed: false,
-        };
-      }
-    }
-
-    leaderPath.push(nextLeader);
-    partnerPath.push(nextPartner);
-    leader = nextLeader;
-    partner = nextPartner;
-
-    const leaderRotator = rotatorAt(mechanics.rotators, leader);
-    const partnerRotator = rotatorAt(mechanics.rotators, partner);
-    if (leaderRotator) {
-      dir = applyTurn(dir, leaderRotator.turn ?? 1);
-    } else if (partnerRotator) {
-      dir = applyTurn(dir, partnerRotator.turn ?? 1);
-    }
-  }
-}
-
-function slideGroup(state: GameState, leader: TileState): SlideResult {
+function computeSlide(state: GameState, leader: TileState): SlideComputation | SlideFailure {
   const partner = findLinkedPartner(state, leader);
   const ignore = new Set<TileId>([leader.id]);
   if (partner) ignore.add(partner.id);
 
-  const mechanics = slideMechanics(state, ignore);
+  if (isFrozenLocked(state, leader) || (partner && isFrozenLocked(state, partner))) {
+    return blockedFailure('frozen');
+  }
+
+  const ctx = buildSlideContext(state, ignore);
 
   if (partner) {
-    if (isFrozenLocked(state, leader) || isFrozenLocked(state, partner)) {
-      return { ok: false, reason: 'frozen' };
-    }
-
-    const { leaderPath, partnerPath } = simulatePairSlide(
+    const { leaderPath, partnerPath, sideEffects, cleared, blockedByTile } = simulatePairSlide(
       { q: leader.q, r: leader.r },
       { q: partner.q, r: partner.r },
       leader.dir,
-      mechanics,
+      leader.id,
+      partner.id,
+      ctx,
     );
 
-    if (leaderPath.length <= 1) {
-      return { ok: false, reason: 'blocked' };
+    if (leaderPath.length <= 1 || !cleared) {
+      const bounceAnimations =
+        blockedByTile && leaderPath.length > 1
+          ? [
+              { tileId: leader.id, path: leaderPath },
+              ...(partnerPath.length > 1 ? [{ tileId: partner.id, path: partnerPath }] : []),
+            ]
+          : undefined;
+      return blockedFailure('blocked', bounceAnimations);
     }
 
     return {
@@ -213,29 +150,32 @@ function slideGroup(state: GameState, leader: TileState): SlideResult {
         { tileId: leader.id, path: leaderPath },
         { tileId: partner.id, path: partnerPath },
       ],
+      ctx,
+      unlinkedTileIds: sideEffects.unlinkedTileIds,
     };
   }
 
-  if (isFrozenLocked(state, leader)) {
-    return { ok: false, reason: 'frozen' };
-  }
-
-  const { path } = simulateSlide({ q: leader.q, r: leader.r }, leader.dir, mechanics);
-  if (path.length <= 1) {
-    return { ok: false, reason: 'blocked' };
+  const result = simulateEntitySlide({ q: leader.q, r: leader.r }, leader.dir, ctx);
+  if (result.path.length <= 1 || !slideCompletes(result)) {
+    const bounceAnimations =
+      result.blockedByTile && result.path.length > 1
+        ? [{ tileId: leader.id, path: result.path }]
+        : undefined;
+    return blockedFailure('blocked', bounceAnimations);
   }
 
   return {
     ok: true,
-    path,
-    animations: [{ tileId: leader.id, path }],
+    path: result.path,
+    animations: [{ tileId: leader.id, path: result.path }],
+    ctx,
+    unlinkedTileIds: result.sideEffects.unlinkedTileIds,
   };
 }
 
 export function slideBlockReason(state: GameState, tile: TileState): SlideBlockReason | null {
-  const result = slideGroup(state, tile);
-  if (!result.ok) return result.reason;
-  return null;
+  const result = computeSlide(state, tile);
+  return result.ok ? null : result.reason;
 }
 
 export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
@@ -248,7 +188,20 @@ export function canSlideTile(state: GameState, tileId: TileId): SlideResult {
     return { ok: false, reason: 'missing' };
   }
 
-  return slideGroup(state, tile);
+  const result = computeSlide(state, tile);
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.reason,
+      ...(result.bounceAnimations ? { bounceAnimations: result.bounceAnimations } : {}),
+    };
+  }
+
+  return {
+    ok: true,
+    path: result.path,
+    animations: result.animations,
+  };
 }
 
 export function recordMove(state: GameState): GameState {
@@ -256,22 +209,41 @@ export function recordMove(state: GameState): GameState {
 }
 
 export function applySlide(state: GameState, tileId: TileId): GameState {
-  const result = canSlideTile(state, tileId);
-  if (!result.ok) {
-    return state;
-  }
+  const tile = state.tiles.find((entry) => entry.id === tileId);
+  if (!tile) return state;
+
+  const result = computeSlide(state, tile);
+  if (!result.ok) return state;
 
   const removeIds = new Set(result.animations.map((entry) => entry.tileId));
+  const clearedTileKeys = state.tiles
+    .filter((entry) => removeIds.has(entry.id))
+    .map((entry) => coordKey(entry));
 
-  const next: GameState = {
+  let tiles = state.tiles.filter((entry) => !removeIds.has(entry.id));
+  if (result.unlinkedTileIds.length > 0) {
+    const unlinked = new Set(result.unlinkedTileIds);
+    tiles = tiles.map((entry) => {
+      if (!unlinked.has(entry.id)) return entry;
+      const next = copyTile(entry);
+      delete next.linked;
+      return next;
+    });
+  }
+
+  let next: GameState = {
     ...state,
-    tiles: state.tiles.filter((tile) => !removeIds.has(tile.id)),
+    tiles,
+    gateOpen: [...result.ctx.gateOpen],
+    crumbledKeys: [...result.ctx.crumbledKeys],
+    crates: collectCratesFromContext(result.ctx),
   };
 
   if (next.tiles.length === 0) {
     next.status = 'won';
   }
 
+  next = applyMagnetPull(next, clearedTileKeys);
   return recordMove(next);
 }
 
@@ -289,7 +261,15 @@ export function cloneState(state: GameState): GameState {
     holes: state.holes.map((hole) => ({ ...hole })),
     oneWayWalls: state.oneWayWalls.map((wall) => ({ ...wall })),
     rotators: state.rotators.map((rotator) => ({ ...rotator })),
+    teleporters: state.teleporters.map((teleporter) => ({ ...teleporter })),
+    toggleGates: state.toggleGates.map((gate) => ({ ...gate })),
+    crumbling: state.crumbling.map((cell) => ({ ...cell })),
+    splitters: state.splitters.map((cell) => ({ ...cell })),
+    magnets: state.magnets.map((cell) => ({ ...cell })),
     tiles: state.tiles.map(copyTile),
+    crates: state.crates.map((crate) => ({ ...crate })),
+    crumbledKeys: [...state.crumbledKeys],
+    gateOpen: [...state.gateOpen],
     moveCount: state.moveCount,
     ...(state.par !== undefined ? { par: state.par } : {}),
   };

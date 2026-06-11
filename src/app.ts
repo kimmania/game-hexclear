@@ -170,7 +170,17 @@ export class HexClearApp {
           holes: session.holes ?? this.levelDef.holes ?? [],
           oneWayWalls: session.oneWayWalls ?? this.levelDef.oneWayWalls ?? [],
           rotators: session.rotators ?? this.levelDef.rotators ?? [],
+          teleporters: session.teleporters ?? this.levelDef.teleporters ?? [],
+          toggleGates: session.toggleGates ?? this.levelDef.toggleGates ?? [],
+          crumbling: session.crumbling ?? this.levelDef.crumbling ?? [],
+          splitters: session.splitters ?? this.levelDef.splitters ?? [],
+          magnets: session.magnets ?? this.levelDef.magnets ?? [],
           tiles: session.tiles,
+          crates: session.crates ?? this.levelDef.crates ?? [],
+          crumbledKeys: session.crumbledKeys ?? [],
+          gateOpen:
+            session.gateOpen ??
+            (this.levelDef.toggleGates ?? []).map((gate) => gate.open === true),
           moveCount: session.moveCount ?? 0,
           ...(session.par !== undefined
             ? { par: session.par }
@@ -314,7 +324,13 @@ export class HexClearApp {
       this.state = recordMove(this.state);
       this.persistSession();
       this.syncChrome();
-      this.board.flashBlocked(tileId);
+      if (result.bounceAnimations?.length) {
+        this.busy = true;
+        await this.board.animateBounce(this.state, result.bounceAnimations);
+        this.busy = false;
+      } else {
+        this.board.flashBlocked(tileId);
+      }
       playSound('blocked');
       pulseHaptic([12, 40, 12]);
       setHint(hintForBlockReason(result.reason));

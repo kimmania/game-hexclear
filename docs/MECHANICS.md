@@ -11,22 +11,26 @@
 | **One-way walls** | `oneWayWalls[]` | `{ q, r, dir }` blocks entering that cell when moving in `dir` |
 | **Rotators** | `rotators[]` | `{ q, r, turn? }` rotates slide direction clockwise (`1`, default), counter-clockwise (`-1`), or 180° (`2`) |
 | **Linked pairs** | `tile.linked` | Mutual id link; tapping either slides both in the tapped tile's direction |
+| **Teleporters** | `teleporters[]` | `{ q, r, group }` — paired portals (same `group`) warp slides, preserving direction; each group fires at most once per slide |
+| **Toggle gates** | `toggleGates[]` | `{ switchQ, switchR, gateQ, gateR, open? }` — leaving the switch toggles the gate hex |
+| **Crumbling paths** | `crumbling[]` | Hex coords that vanish after a slide crosses them once |
+| **Push crates** | `crates[]` | `{ id, q, r }` — block slides but can be pushed (into holes or off-board) |
+| **Splitters** | `splitters[]` | Linked pairs break apart when they cross a splitter cell |
+| **Magnets** | `magnets[]` | When a neighbor clears, unlinked tiles pull one step toward the nearest magnet |
 
-Tutorial levels: **31** (one-way), **32** (rotator), **33** (linked pair).
+Tutorial levels:
+
+| Levels | Mechanic |
+|--------|----------|
+| 31–33 | One-way, rotator, linked pair |
+| 34–39 | Teleporter, toggle gate, crumbling, crate, splitter, magnet |
 
 ## Ideas for later levels
 
-These are not implemented yet — candidates for future packs:
+- **Direction locks** — cell that forces a specific exit direction
+- **Color gates** — only matching direction colors may pass
+- **Delayed rotators** — rotate one beat after leaving the cell
+- **Ice patches** — slide continues one extra hex after leaving ice
+- **Toggle one-ways** — switches that flip directional barriers elsewhere
 
-- **Teleporters** — paired portals; exiting one re-enters at the other with preserved or rotated direction
-- **Toggle gates** — slide past a switch to flip a wall or one-way on/off elsewhere
-- **Direction locks** — cell that forces a specific exit direction (one-way for all dirs except one)
-- **Crumbling tiles** — tile hex vanishes after a slide crosses it (limits re-use of paths)
-- **Push crates** — heavy blocks that slide like tiles but don't auto-clear; must reach a goal or hole
-- **Color gates** — only tiles whose direction color matches may pass (needs alternate win condition or mixed rules)
-- **Delayed rotators** — rotate the tile one beat after leaving the cell (timing puzzles in animated mode)
-- **Splitters** — linked group breaks apart when crossing a marked cell
-- **Ice patches** — slide continues one extra hex in the same direction after leaving ice
-- **Magnets** — non-linked tiles pulled one step toward a pole when a neighbor clears
-
-When adding a mechanic, update `board.ts`, `validateLevel.ts`, the solver BFS, editor tools, and ship at least one tutorial level.
+When adding a mechanic, update `slideEngine.ts`, `board.ts`, `validateLevel.ts`, the solver BFS, editor tools, and ship at least one tutorial level.

@@ -35,6 +35,12 @@ export function loadEditorDraft(): EditorDraft | null {
       holes: parsed.holes.map((hole) => ({ ...hole })),
       oneWayWalls: (parsed.oneWayWalls ?? []).map((wall) => ({ ...wall })),
       rotators: (parsed.rotators ?? []).map((rotator) => ({ ...rotator })),
+      teleporters: (parsed.teleporters ?? []).map((teleporter) => ({ ...teleporter })),
+      toggleGates: (parsed.toggleGates ?? []).map((gate) => ({ ...gate })),
+      crumbling: (parsed.crumbling ?? []).map((cell) => ({ ...cell })),
+      crates: (parsed.crates ?? []).map((crate) => ({ ...crate })),
+      splitters: (parsed.splitters ?? []).map((cell) => ({ ...cell })),
+      magnets: (parsed.magnets ?? []).map((cell) => ({ ...cell })),
       ...(parsed.par !== undefined ? { par: parsed.par } : {}),
     };
   } catch {

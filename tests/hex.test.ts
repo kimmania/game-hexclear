@@ -235,13 +235,13 @@ describe('one-way walls', () => {
       ],
     };
     expect(canSlideTile(createGameState(eastAttempt), 'a').ok).toBe(false);
-    expect(canSlideTile(state, 'b').ok).toBe(true);
+    expect(canSlideTile(state, 'b').ok).toBe(false);
   });
 
   it('solves after using the open direction', () => {
     let state = createGameState(level);
-    state = applySlide(state, 'b');
-    expect(canSlideTile(state, 'a').ok).toBe(true);
+    state = applySlide(state, 'a');
+    expect(canSlideTile(state, 'b').ok).toBe(true);
     expect(solveLevel(level).solvable).toBe(true);
   });
 });
@@ -338,5 +338,210 @@ describe('hints', () => {
       ],
     });
     expect(findHintMove(state)).toBeNull();
+  });
+});
+
+describe('advanced mechanics', () => {
+  it('teleports through paired portals', () => {
+    const level: LevelDef = {
+      id: 301,
+      name: 'Portal',
+      cells: [
+        { q: -1, r: 0 },
+        { q: 0, r: 0 },
+        { q: 2, r: 0 },
+        { q: 3, r: 0 },
+      ],
+      teleporters: [
+        { q: 0, r: 0, group: 'a' },
+        { q: 2, r: 0, group: 'a' },
+      ],
+      tiles: [{ id: 'a', q: -1, r: 0, dir: 0 }],
+    };
+    const result = canSlideTile(createGameState(level), 'a');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.path.map(coordKey)).toEqual(['-1,0', '0,0', '2,0', '3,0', '4,0']);
+    }
+  });
+
+  it('opens toggle gates when leaving a switch', () => {
+    const level: LevelDef = {
+      id: 302,
+      name: 'Gate',
+      par: 2,
+      cells: [
+        { q: -1, r: 0 },
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 2, r: 0 },
+        { q: 2, r: -1 },
+      ],
+      toggleGates: [{ switchQ: 0, switchR: 0, gateQ: 1, gateR: 0 }],
+      tiles: [
+        { id: 'a', q: -1, r: 0, dir: 0 },
+        { id: 'b', q: 2, r: -1, dir: 5 },
+      ],
+    };
+    expect(solveLevel(level).solvable).toBe(true);
+  });
+
+  it('crumbles a bridge after crossing', () => {
+    const level: LevelDef = {
+      id: 303,
+      name: 'Crumble',
+      par: 3,
+      cells: [
+        { q: -1, r: 0 },
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 2, r: 0 },
+        { q: 0, r: 1 },
+        { q: 0, r: -1 },
+      ],
+      crumbling: [{ q: 0, r: 0 }],
+      tiles: [
+        { id: 'a', q: -1, r: 0, dir: 0 },
+        { id: 'b', q: 2, r: 0, dir: 3 },
+        { id: 'c', q: 0, r: 1, dir: 2 },
+      ],
+    };
+    const start = createGameState(level);
+    const blockedA = canSlideTile(start, 'a');
+    expect(blockedA.ok).toBe(false);
+    if (!blockedA.ok) {
+      expect(blockedA.bounceAnimations?.[0]?.path.map(coordKey)).toEqual(['-1,0', '0,0', '1,0']);
+    }
+    const blockedB = canSlideTile(start, 'b');
+    expect(blockedB.ok).toBe(false);
+    if (!blockedB.ok) {
+      expect(blockedB.bounceAnimations?.[0]?.path.map(coordKey)).toEqual(['2,0', '1,0', '0,0']);
+    }
+    expect(canSlideTile(start, 'c').ok).toBe(true);
+    let state = applySlide(start, 'c');
+    expect(state.crumbledKeys).toContain('0,0');
+    expect(canSlideTile(state, 'a').ok).toBe(true);
+    expect(canSlideTile(state, 'b').ok).toBe(true);
+    state = applySlide(state, 'a');
+    state = applySlide(state, 'b');
+    expect(state.status).toBe('won');
+    expect(solveLevel(level).solvable).toBe(true);
+  });
+
+  it('pushes crates out of the way', () => {
+    const level: LevelDef = {
+      id: 304,
+      name: 'Crate',
+      cells: [
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 2, r: 0 },
+        { q: 3, r: 0 },
+      ],
+      crates: [{ id: 'c1', q: 1, r: 0 }],
+      tiles: [{ id: 'a', q: 0, r: 0, dir: 0 }],
+    };
+    const next = applySlide(createGameState(level), 'a');
+    expect(next.tiles).toHaveLength(0);
+    expect(next.crates).toHaveLength(0);
+  });
+
+  it('pulls tiles toward magnets after a neighbor clears', () => {
+    const level: LevelDef = {
+      id: 305,
+      name: 'Magnet',
+      cells: [
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 1, r: -1 },
+      ],
+      magnets: [{ q: 1, r: -1 }],
+      tiles: [
+        { id: 'a', q: 1, r: 0, dir: 1 },
+        { id: 'b', q: 0, r: 0, dir: 0 },
+      ],
+    };
+    let state = createGameState(level);
+    state = applySlide(state, 'a');
+    const remaining = state.tiles.find((tile) => tile.id === 'b');
+    expect(remaining?.q).toBe(1);
+    expect(remaining?.r).toBe(-1);
+  });
+
+  it('level 34 hops past a blocker between portals', () => {
+    const level: LevelDef = {
+      id: 34,
+      name: 'Portal hop',
+      par: 2,
+      cells: [
+        { q: -1, r: 0 },
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 2, r: 0 },
+        { q: 3, r: 0 },
+      ],
+      teleporters: [
+        { q: 0, r: 0, group: 'a' },
+        { q: 2, r: 0, group: 'a' },
+      ],
+      tiles: [
+        { id: 't1', q: -1, r: 0, dir: 0 },
+        { id: 't2', q: 1, r: 0, dir: 3 },
+      ],
+    };
+    const start = createGameState(level);
+    const slide = canSlideTile(start, 't1');
+    expect(slide.ok).toBe(true);
+    if (slide.ok) {
+      expect(slide.path.map(coordKey)).not.toContain('1,0');
+    }
+    let after = applySlide(start, 't1');
+    expect(after.tiles.map((t) => t.id)).toEqual(['t2']);
+    after = applySlide(after, 't2');
+    expect(after.status).toBe('won');
+    expect(solveLevel(level).solvable).toBe(true);
+  });
+
+  it('level 37 stops yellow before the white blocker', () => {
+    const level: LevelDef = {
+      id: 37,
+      name: 'Push through',
+      par: 2,
+      cells: [
+        { q: -1, r: 0 },
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 2, r: 0 },
+        { q: 3, r: 0 },
+      ],
+      crates: [{ id: 'c1', q: 1, r: 0 }],
+      tiles: [
+        { id: 't1', q: -1, r: 0, dir: 0 },
+        { id: 't2', q: 2, r: 0, dir: 0 },
+      ],
+    };
+    const start = createGameState(level);
+    expect(canSlideTile(start, 't1').ok).toBe(false);
+    expect(canSlideTile(start, 't2').ok).toBe(true);
+    expect(solveLevel(level).solvable).toBe(true);
+  });
+
+  it('solves magnet tutorial layout', () => {
+    const level: LevelDef = {
+      id: 39,
+      name: 'Magnetic pull',
+      par: 2,
+      cells: [
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+        { q: 1, r: -1 },
+      ],
+      magnets: [{ q: 1, r: -1 }],
+      tiles: [
+        { id: 't1', q: 1, r: 0, dir: 1 },
+        { id: 't2', q: 0, r: 0, dir: 0 },
+      ],
+    };
+    expect(solveLevel(level).solvable).toBe(true);
   });
 });

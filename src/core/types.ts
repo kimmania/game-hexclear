@@ -25,6 +25,12 @@ export type TileDef = {
   linked?: string;
 };
 
+export type CrateDef = {
+  id: string;
+  q: number;
+  r: number;
+};
+
 /** Blocks entering this cell when sliding in the given direction. */
 export type OneWayWallDef = {
   q: number;
@@ -40,6 +46,23 @@ export type RotatorDef = {
   turn?: 1 | -1 | 2;
 };
 
+/** Paired portal — same `group` teleports between cells, preserving direction. */
+export type TeleporterDef = {
+  q: number;
+  r: number;
+  group: string;
+};
+
+/** Slide over the switch toggles whether the gate hex blocks. */
+export type ToggleGateDef = {
+  switchQ: number;
+  switchR: number;
+  gateQ: number;
+  gateR: number;
+  /** When true the gate starts open (passable). Default false. */
+  open?: boolean;
+};
+
 export type LevelDef = {
   id: number;
   name: string;
@@ -49,6 +72,15 @@ export type LevelDef = {
   holes?: HexCoord[];
   oneWayWalls?: OneWayWallDef[];
   rotators?: RotatorDef[];
+  teleporters?: TeleporterDef[];
+  toggleGates?: ToggleGateDef[];
+  /** Cells that vanish after a slide crosses them once. */
+  crumbling?: HexCoord[];
+  crates?: CrateDef[];
+  /** Cells that break linked pairs when crossed. */
+  splitters?: HexCoord[];
+  /** Attracts adjacent tiles one step closer when a neighbor clears. */
+  magnets?: HexCoord[];
   /** Target move count for an optimal clear. */
   par?: number;
 };
@@ -62,6 +94,12 @@ export type TileState = {
   linked?: string;
 };
 
+export type CrateState = {
+  id: string;
+  q: number;
+  r: number;
+};
+
 export type GameStatus = 'playing' | 'won';
 
 export type GameState = {
@@ -73,7 +111,17 @@ export type GameState = {
   holes: HexCoord[];
   oneWayWalls: OneWayWallDef[];
   rotators: RotatorDef[];
+  teleporters: TeleporterDef[];
+  toggleGates: ToggleGateDef[];
+  crumbling: HexCoord[];
+  splitters: HexCoord[];
+  magnets: HexCoord[];
   tiles: TileState[];
+  crates: CrateState[];
+  /** Cell keys that have crumbled and are no longer passable. */
+  crumbledKeys: string[];
+  /** Per gate index — true when passable. */
+  gateOpen: boolean[];
   moveCount: number;
   par?: number;
 };
@@ -87,6 +135,6 @@ export type SlideAnimation = {
 
 export type SlideResult =
   | { ok: true; path: HexCoord[]; animations: SlideAnimation[] }
-  | { ok: false; reason: SlideBlockReason };
+  | { ok: false; reason: SlideBlockReason; bounceAnimations?: SlideAnimation[] };
 
 export type TileId = string;

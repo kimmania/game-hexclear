@@ -1,5 +1,14 @@
 import { validateLevel } from './validateLevel';
-import type { HexDirection, LevelDef, OneWayWallDef, RotatorDef, TileDef } from './types';
+import type {
+  CrateDef,
+  HexDirection,
+  LevelDef,
+  OneWayWallDef,
+  RotatorDef,
+  TeleporterDef,
+  TileDef,
+  ToggleGateDef,
+} from './types';
 
 export type ParseLevelSuccess = {
   ok: true;
@@ -77,6 +86,59 @@ function normalizeRotator(value: unknown): RotatorDef | null {
   return rotator;
 }
 
+function normalizeTeleporter(value: unknown): TeleporterDef | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r) ||
+    typeof value.group !== 'string' ||
+    value.group.trim().length === 0
+  ) {
+    return null;
+  }
+  return { q: value.q, r: value.r, group: value.group.trim() };
+}
+
+function normalizeToggleGate(value: unknown): ToggleGateDef | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.switchQ !== 'number' ||
+    !Number.isInteger(value.switchQ) ||
+    typeof value.switchR !== 'number' ||
+    !Number.isInteger(value.switchR) ||
+    typeof value.gateQ !== 'number' ||
+    !Number.isInteger(value.gateQ) ||
+    typeof value.gateR !== 'number' ||
+    !Number.isInteger(value.gateR)
+  ) {
+    return null;
+  }
+  const gate: ToggleGateDef = {
+    switchQ: value.switchQ,
+    switchR: value.switchR,
+    gateQ: value.gateQ,
+    gateR: value.gateR,
+  };
+  if (value.open === true) gate.open = true;
+  return gate;
+}
+
+function normalizeCrate(value: unknown): CrateDef | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r)
+  ) {
+    return null;
+  }
+  return { id: value.id, q: value.q, r: value.r };
+}
+
 function normalizeCoord(value: unknown): { q: number; r: number } | null {
   if (!isRecord(value)) return null;
   if (
@@ -148,6 +210,40 @@ export function parseLevelJson(text: string): ParseLevelResult {
     return { ok: false, message: 'Invalid rotator definition.' };
   }
 
+  const teleporters = Array.isArray(raw.teleporters)
+    ? raw.teleporters.map(normalizeTeleporter)
+    : [];
+  if (teleporters.some((entry) => entry === null)) {
+    return { ok: false, message: 'Invalid teleporter definition.' };
+  }
+
+  const toggleGates = Array.isArray(raw.toggleGates)
+    ? raw.toggleGates.map(normalizeToggleGate)
+    : [];
+  if (toggleGates.some((entry) => entry === null)) {
+    return { ok: false, message: 'Invalid toggle gate definition.' };
+  }
+
+  const crumbling = Array.isArray(raw.crumbling) ? raw.crumbling.map(normalizeCoord) : [];
+  if (crumbling.some((cell) => cell === null)) {
+    return { ok: false, message: 'Invalid crumbling cell.' };
+  }
+
+  const crates = Array.isArray(raw.crates) ? raw.crates.map(normalizeCrate) : [];
+  if (crates.some((crate) => crate === null)) {
+    return { ok: false, message: 'Invalid crate definition.' };
+  }
+
+  const splitters = Array.isArray(raw.splitters) ? raw.splitters.map(normalizeCoord) : [];
+  if (splitters.some((cell) => cell === null)) {
+    return { ok: false, message: 'Invalid splitter cell.' };
+  }
+
+  const magnets = Array.isArray(raw.magnets) ? raw.magnets.map(normalizeCoord) : [];
+  if (magnets.some((cell) => cell === null)) {
+    return { ok: false, message: 'Invalid magnet cell.' };
+  }
+
   const level: LevelDef = {
     id: raw.id,
     name: raw.name.trim(),
@@ -166,6 +262,24 @@ export function parseLevelJson(text: string): ParseLevelResult {
   }
   if (rotators.length > 0) {
     level.rotators = rotators as RotatorDef[];
+  }
+  if (teleporters.length > 0) {
+    level.teleporters = teleporters as TeleporterDef[];
+  }
+  if (toggleGates.length > 0) {
+    level.toggleGates = toggleGates as ToggleGateDef[];
+  }
+  if (crumbling.length > 0) {
+    level.crumbling = crumbling as { q: number; r: number }[];
+  }
+  if (crates.length > 0) {
+    level.crates = crates as CrateDef[];
+  }
+  if (splitters.length > 0) {
+    level.splitters = splitters as { q: number; r: number }[];
+  }
+  if (magnets.length > 0) {
+    level.magnets = magnets as { q: number; r: number }[];
   }
 
   if (raw.par !== undefined) {

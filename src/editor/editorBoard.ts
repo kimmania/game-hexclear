@@ -10,6 +10,13 @@ import {
   createDirectionArrow,
   createOneWayWallMarker,
   createRotatorMarker,
+  createTeleporterMarker,
+  createToggleSwitchMarker,
+  createClosedGateMarker,
+  createCrumblingMarker,
+  createSplitterMarker,
+  createMagnetMarker,
+  createCrateMarker,
   hexPolygonPoints,
 } from '../ui/hexLayout';
 
@@ -90,6 +97,31 @@ export function createEditorBoard(
 
     for (const rotator of draft.rotators) {
       bg.appendChild(createRotatorMarker(rotator.q, rotator.r));
+    }
+
+    for (const teleporter of draft.teleporters) {
+      bg.appendChild(createTeleporterMarker(teleporter.q, teleporter.r, teleporter.group));
+    }
+
+    for (const gate of draft.toggleGates) {
+      bg.appendChild(createToggleSwitchMarker(gate.switchQ, gate.switchR));
+      bg.appendChild(createClosedGateMarker(gate.gateQ, gate.gateR));
+    }
+
+    for (const cell of draft.crumbling) {
+      bg.appendChild(createCrumblingMarker(cell.q, cell.r, false));
+    }
+
+    for (const cell of draft.splitters) {
+      bg.appendChild(createSplitterMarker(cell.q, cell.r));
+    }
+
+    for (const cell of draft.magnets) {
+      bg.appendChild(createMagnetMarker(cell.q, cell.r));
+    }
+
+    for (const crate of draft.crates) {
+      bg.appendChild(createCrateMarker(crate.q, crate.r));
     }
 
     const linkLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');

@@ -27,7 +27,13 @@ export function stateKey(state: GameState): string {
     })
     .sort()
     .join('|');
-  return `${state.status}|${tiles}`;
+  const crates = state.crates
+    .map((crate) => `${crate.id}@${crate.q},${crate.r}`)
+    .sort()
+    .join('|');
+  const crumbled = [...state.crumbledKeys].sort().join(',');
+  const gates = state.gateOpen.map((open) => (open ? '1' : '0')).join('');
+  return `${state.status}|${tiles}|C:${crates}|R:${crumbled}|G:${gates}`;
 }
 
 function legalMoves(state: GameState): TileId[] {
