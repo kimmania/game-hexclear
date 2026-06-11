@@ -37,42 +37,42 @@
       "q": 1,
       "r": -1,
       "dir": 1,
-      "color": "gold"
+      "color": "sky"
     },
     {
       "id": "t2",
       "q": 0,
       "r": -1,
       "dir": 2,
-      "color": "lavender"
+      "color": "mint"
     },
     {
       "id": "t3",
       "q": -1,
       "r": 0,
       "dir": 3,
-      "color": "rose"
+      "color": "gold"
     },
     {
       "id": "t4",
       "q": 0,
       "r": 1,
       "dir": 4,
-      "color": "coral"
+      "color": "lavender"
     },
     {
       "id": "t5",
       "q": 1,
       "r": 1,
       "dir": 5,
-      "color": "sky"
+      "color": "rose"
     },
     {
       "id": "t6",
       "q": 1,
       "r": 0,
       "dir": 0,
-      "color": "mint"
+      "color": "coral"
     },
     {
       "id": "t7",

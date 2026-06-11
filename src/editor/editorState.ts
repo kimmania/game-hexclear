@@ -1,5 +1,6 @@
 import { coordKey } from '../core/hex';
-import type { HexCoord, HexDirection, LevelDef, TileColor, TileDef } from '../core/types';
+import { colorForDirection } from '../core/tileColors';
+import type { HexCoord, HexDirection, LevelDef, TileDef } from '../core/types';
 
 export type EditorTool = 'cell' | 'tile' | 'wall' | 'hole' | 'frozen' | 'erase';
 
@@ -16,15 +17,6 @@ export type EditorDraft = {
 export type TilePlacementOptions = {
   frozen?: boolean;
 };
-
-export const TILE_COLOR_OPTIONS: TileColor[] = [
-  'coral',
-  'sky',
-  'mint',
-  'gold',
-  'lavender',
-  'rose',
-];
 
 export function draftFromLevel(level: LevelDef): EditorDraft {
   return {
@@ -145,7 +137,6 @@ export function addOrCycleTile(
   draft: EditorDraft,
   q: number,
   r: number,
-  color: TileColor,
   options: TilePlacementOptions = {},
 ): void {
   if (!hasCell(draft, q, r)) return;
@@ -155,16 +146,17 @@ export function addOrCycleTile(
   const existing = findTile(draft, q, r);
   if (existing) {
     existing.dir = ((existing.dir + 1) % 6) as HexDirection;
-    existing.color = color;
+    existing.color = colorForDirection(existing.dir);
     return;
   }
 
+  const dir = 0 as HexDirection;
   const tile: TileDef = {
     id: nextTileId(draft),
     q,
     r,
-    dir: 0,
-    color,
+    dir,
+    color: colorForDirection(dir),
   };
   if (options.frozen) {
     tile.frozen = true;
@@ -176,7 +168,6 @@ export function applyTool(
   draft: EditorDraft,
   tool: EditorTool,
   coord: HexCoord,
-  tileColor: TileColor,
   tileOptions: TilePlacementOptions = {},
 ): void {
   const { q, r } = coord;
@@ -186,7 +177,7 @@ export function applyTool(
       addCell(draft, q, r);
       break;
     case 'tile':
-      addOrCycleTile(draft, q, r, tileColor, tileOptions);
+      addOrCycleTile(draft, q, r, tileOptions);
       break;
     case 'wall':
       toggleWall(draft, q, r);

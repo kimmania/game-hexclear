@@ -1,4 +1,6 @@
 import type { LevelDef } from './types';
+import { colorForDirection } from './tileColors';
+import type { HexDirection } from './types';
 
 const COLORS = new Set(['coral', 'sky', 'mint', 'gold', 'lavender', 'rose']);
 
@@ -84,6 +86,12 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
     }
     if (holeKeys.has(key)) {
       throw new Error(`Tile ${tile.id} cannot start on a hole`);
+    }
+    const expectedColor = colorForDirection(tile.dir as HexDirection);
+    if (tile.color !== expectedColor) {
+      throw new Error(
+        `Tile ${tile.id} color "${tile.color}" does not match direction ${tile.dir} (expected "${expectedColor}")`,
+      );
     }
   }
 

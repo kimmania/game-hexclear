@@ -7,19 +7,23 @@ import {
   loadEditorDraft,
   saveEditorDraft,
 } from './editorStorage';
-import type { TileColor } from '../core/types';
 import {
   applyTool,
   createEmptyDraft,
   draftFromLevel,
   type EditorDraft,
   type EditorTool,
-  TILE_COLOR_OPTIONS,
 } from './editorState';
+import { COLOR_BY_DIRECTION, DIRECTION_LABELS } from '../core/tileColors';
+import type { HexDirection } from '../core/types';
+
+const COLOR_LEGEND = (Object.entries(COLOR_BY_DIRECTION) as [string, string][])
+  .map(([dir, color]) => `${DIRECTION_LABELS[Number(dir) as HexDirection]} → ${color}`)
+  .join(' · ');
 
 const TOOL_HINTS: Record<EditorTool, string> = {
   cell: 'Tap a faint hex to add a board cell. Ghost hexes show valid expansions.',
-  tile: 'Tap a cell to place a tile. Tap again on the same cell to rotate its arrow.',
+  tile: `Tap a cell to place a tile. Tap again to rotate arrow (color follows direction). ${COLOR_LEGEND}`,
   wall: 'Tap a cell to toggle a wall (blocks slides).',
   hole: 'Tap a cell to toggle a pit (tiles fall in and are removed).',
   frozen: 'Tap a tile to toggle frozen (locked while neighbors remain).',
@@ -54,7 +58,6 @@ export async function bootstrapEditor(): Promise<void> {
 
   const draft = await loadInitialDraft();
   let tool: EditorTool = 'cell';
-  let tileColor: TileColor = 'coral';
   let tileFrozen = false;
 
   app.innerHTML = '';
@@ -97,24 +100,6 @@ export async function bootstrapEditor(): Promise<void> {
   const optionsBar = document.createElement('div');
   optionsBar.className = 'editor-options-bar';
 
-  const colorLabel = document.createElement('label');
-  colorLabel.className = 'editor-color-label';
-  colorLabel.textContent = 'Tile color';
-
-  const colorSelect = document.createElement('select');
-  colorSelect.className = 'editor-field editor-color-select';
-  colorSelect.setAttribute('aria-label', 'Tile color');
-  for (const color of TILE_COLOR_OPTIONS) {
-    const option = document.createElement('option');
-    option.value = color;
-    option.textContent = color;
-    colorSelect.appendChild(option);
-  }
-  colorSelect.value = tileColor;
-  colorSelect.addEventListener('change', () => {
-    tileColor = colorSelect.value as TileColor;
-  });
-
   const frozenLabel = document.createElement('label');
   frozenLabel.className = 'editor-color-label';
   const frozenCheck = document.createElement('input');
@@ -137,8 +122,7 @@ export async function bootstrapEditor(): Promise<void> {
     render();
   });
 
-  colorLabel.append(colorSelect);
-  optionsBar.append(colorLabel, frozenLabel, clearBtn);
+  optionsBar.append(frozenLabel, clearBtn);
 
   const hint = document.createElement('p');
   hint.className = 'hint editor-hint';
@@ -237,7 +221,7 @@ export async function bootstrapEditor(): Promise<void> {
   app.append(header, toolbar, optionsBar, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
-    applyTool(draft, tool, coord, tileColor, {
+    applyTool(draft, tool, coord, {
       frozen: tileFrozen,
     });
     render();
@@ -249,7 +233,6 @@ export async function bootstrapEditor(): Promise<void> {
       btn.classList.toggle('editor-tool-active', id === tool);
     }
     hint.textContent = TOOL_HINTS[tool];
-    colorSelect.disabled = tool !== 'tile';
     frozenCheck.disabled = tool !== 'tile';
     render();
   }

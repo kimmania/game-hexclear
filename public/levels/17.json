@@ -56,56 +56,56 @@
       "q": 1,
       "r": 0,
       "dir": 0,
-      "color": "sky"
+      "color": "coral"
     },
     {
       "id": "t3",
       "q": 1,
       "r": -1,
       "dir": 1,
-      "color": "mint"
+      "color": "sky"
     },
     {
       "id": "t4",
       "q": 0,
       "r": -1,
       "dir": 2,
-      "color": "gold"
+      "color": "mint"
     },
     {
       "id": "t5",
       "q": -1,
       "r": -1,
       "dir": 3,
-      "color": "lavender"
+      "color": "gold"
     },
     {
       "id": "t6",
       "q": -1,
       "r": 0,
       "dir": 3,
-      "color": "rose"
+      "color": "gold"
     },
     {
       "id": "t7",
       "q": -1,
       "r": 1,
       "dir": 4,
-      "color": "coral"
+      "color": "lavender"
     },
     {
       "id": "t8",
       "q": 0,
       "r": 1,
       "dir": 5,
-      "color": "sky"
+      "color": "rose"
     },
     {
       "id": "t9",
       "q": 1,
       "r": 1,
       "dir": 0,
-      "color": "mint"
+      "color": "coral"
     },
     {
       "id": "t10",

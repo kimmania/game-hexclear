@@ -194,12 +194,23 @@ describe('levels', () => {
     ],
     tiles: [
       { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
-      { id: 't2', q: 1, r: 0, dir: 0, color: 'sky' },
+      { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
     ],
   };
 
   it('validates level schema', () => {
     expect(() => validateLevel(level1, 1)).not.toThrow();
+  });
+
+  it('rejects tile color that does not match direction', () => {
+    const bad: LevelDef = {
+      ...level1,
+      tiles: [
+        { id: 't1', q: 0, r: 0, dir: 0, color: 'sky' },
+        { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
+      ],
+    };
+    expect(() => validateLevel(bad, 1)).toThrow(/does not match direction/);
   });
 
   it('solves bundled level 1', () => {

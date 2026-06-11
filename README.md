@@ -7,11 +7,22 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 ## How to play
 
 1. **Tap a hex tile** to slide it in the direction its arrow points.
-2. The tile moves along that line until it **leaves the board**.
-3. If another tile or wall is in the way, the move is **blocked**.
-4. **Holes** in the board swallow any tile that slides over them.
-5. **Frozen** tiles cannot slide while another tile sits next to them — clear neighbors first, then slide through the gap they leave.
-6. **Clear every hex** to win the level. Beat **par** for a perfect score.
+2. **Color matches direction** — each arrow direction always uses the same color:
+
+   | Direction | Color |
+   |-----------|-------|
+   | East | coral |
+   | Northeast | sky |
+   | Northwest | mint |
+   | West | gold |
+   | Southwest | lavender |
+   | Southeast | rose |
+
+3. The tile moves along that line until it **leaves the board**.
+4. If another tile or wall is in the way, the move is **blocked**.
+5. **Holes** in the board swallow any tile that slides over them.
+6. **Frozen** tiles cannot slide while another tile sits next to them — clear neighbors first, then slide through the gap they leave.
+7. **Clear every hex** to win the level. Beat **par** for a perfect score.
 
 ## Features
 
@@ -56,7 +67,7 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 | **Frozen** | Toggle frozen lock on a tile |
 | **Erase** | Remove a cell and its contents |
 
-Set **Frozen** when placing tiles. Optional **Par** is the target move count.
+Set **Frozen** when placing tiles (color is set automatically from arrow direction). Optional **Par** is the target move count.
 
 **Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, add the id to `index.json`, run `npm run validate-levels`.
 

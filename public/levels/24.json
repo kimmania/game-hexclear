@@ -55,7 +55,7 @@
       "q": 2,
       "r": 0,
       "dir": 3,
-      "color": "sky"
+      "color": "gold"
     },
     {
       "id": "t3",
@@ -70,14 +70,14 @@
       "q": 0,
       "r": 1,
       "dir": 4,
-      "color": "gold"
+      "color": "lavender"
     },
     {
       "id": "t5",
       "q": 0,
       "r": -1,
       "dir": 1,
-      "color": "lavender"
+      "color": "sky"
     }
   ]
 }

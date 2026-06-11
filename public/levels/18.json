@@ -43,14 +43,14 @@
       "q": 2,
       "r": 0,
       "dir": 3,
-      "color": "coral"
+      "color": "gold"
     },
     {
       "id": "t2",
       "q": -2,
       "r": 0,
       "dir": 0,
-      "color": "sky"
+      "color": "coral"
     },
     {
       "id": "t3",
@@ -64,21 +64,21 @@
       "q": 0,
       "r": -1,
       "dir": 4,
-      "color": "gold"
+      "color": "lavender"
     },
     {
       "id": "t5",
       "q": 1,
       "r": 0,
       "dir": 3,
-      "color": "lavender"
+      "color": "gold"
     },
     {
       "id": "t6",
       "q": -1,
       "r": 0,
       "dir": 0,
-      "color": "rose"
+      "color": "coral"
     }
   ],
   "par": 6

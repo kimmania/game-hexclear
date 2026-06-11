@@ -58,7 +58,7 @@
       "q": 0,
       "r": 0,
       "dir": 3,
-      "color": "coral",
+      "color": "gold",
       "frozen": true
     },
     {
@@ -66,7 +66,7 @@
       "q": 1,
       "r": 1,
       "dir": 0,
-      "color": "sky",
+      "color": "coral",
       "frozen": true
     },
     {
@@ -74,35 +74,35 @@
       "q": -1,
       "r": 0,
       "dir": 3,
-      "color": "mint"
+      "color": "gold"
     },
     {
       "id": "t4",
       "q": 2,
       "r": 0,
       "dir": 0,
-      "color": "gold"
+      "color": "coral"
     },
     {
       "id": "t5",
       "q": 0,
       "r": 1,
       "dir": 5,
-      "color": "lavender"
+      "color": "rose"
     },
     {
       "id": "t6",
       "q": 1,
       "r": 0,
       "dir": 0,
-      "color": "rose"
+      "color": "coral"
     },
     {
       "id": "t7",
       "q": 0,
       "r": -1,
       "dir": 2,
-      "color": "coral"
+      "color": "mint"
     },
     {
       "id": "t8",
@@ -116,28 +116,28 @@
       "q": -1,
       "r": 1,
       "dir": 4,
-      "color": "mint"
+      "color": "lavender"
     },
     {
       "id": "t10",
       "q": 2,
       "r": 1,
       "dir": 0,
-      "color": "gold"
+      "color": "coral"
     },
     {
       "id": "t11",
       "q": -1,
       "r": -1,
       "dir": 3,
-      "color": "lavender"
+      "color": "gold"
     },
     {
       "id": "t12",
       "q": 2,
       "r": -1,
       "dir": 0,
-      "color": "rose"
+      "color": "coral"
     }
   ]
 }

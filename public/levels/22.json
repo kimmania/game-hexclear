@@ -36,14 +36,14 @@
       "q": 1,
       "r": 0,
       "dir": 3,
-      "color": "coral"
+      "color": "gold"
     },
     {
       "id": "t2",
       "q": -1,
       "r": 0,
       "dir": 0,
-      "color": "sky"
+      "color": "coral"
     },
     {
       "id": "t3",

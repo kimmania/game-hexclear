@@ -59,21 +59,21 @@
       "q": -1,
       "r": 0,
       "dir": 3,
-      "color": "coral"
+      "color": "gold"
     },
     {
       "id": "t2",
       "q": -1,
       "r": 1,
       "dir": 4,
-      "color": "sky"
+      "color": "lavender"
     },
     {
       "id": "t3",
       "q": 0,
       "r": 0,
       "dir": 3,
-      "color": "mint"
+      "color": "gold"
     },
     {
       "id": "t4",
@@ -87,14 +87,14 @@
       "q": 3,
       "r": 0,
       "dir": 0,
-      "color": "lavender"
+      "color": "coral"
     },
     {
       "id": "t6",
       "q": 2,
       "r": 0,
       "dir": 0,
-      "color": "rose"
+      "color": "coral"
     },
     {
       "id": "t7",
@@ -108,7 +108,7 @@
       "q": 3,
       "r": 1,
       "dir": 0,
-      "color": "sky"
+      "color": "coral"
     }
   ],
   "par": 8

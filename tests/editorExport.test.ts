@@ -21,7 +21,7 @@ describe('editor export', () => {
       ],
       tiles: [
         { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
-        { id: 't2', q: 1, r: 0, dir: 0, color: 'sky' },
+        { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
       ],
     };
     const result = prepareLevelExport(draftFromLevel(level));

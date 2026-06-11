@@ -42,7 +42,7 @@
       "q": 0,
       "r": 0,
       "dir": 0,
-      "color": "sky",
+      "color": "coral",
       "frozen": true
     },
     {
@@ -57,35 +57,35 @@
       "q": -1,
       "r": 0,
       "dir": 3,
-      "color": "mint"
+      "color": "gold"
     },
     {
       "id": "t4",
       "q": 0,
       "r": 1,
       "dir": 5,
-      "color": "gold"
+      "color": "rose"
     },
     {
       "id": "t5",
       "q": 0,
       "r": -1,
       "dir": 2,
-      "color": "lavender"
+      "color": "mint"
     },
     {
       "id": "t6",
       "q": 1,
       "r": -1,
       "dir": 1,
-      "color": "rose"
+      "color": "sky"
     },
     {
       "id": "t7",
       "q": -1,
       "r": 1,
       "dir": 4,
-      "color": "coral"
+      "color": "lavender"
     }
   ]
 }
