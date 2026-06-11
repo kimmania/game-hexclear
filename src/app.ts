@@ -9,11 +9,12 @@ import {
   statusLabel,
   tilesRemaining,
 } from './core/board';
-import { fetchLevel, fetchLevelIndex } from './core/levels';
+import { fetchLevel, fetchLevelIndex, fetchAllLevelPars } from './core/levels';
 import type { GameState, LevelDef, TileId } from './core/types';
 import { configureAudio, playSound, primeAudio } from './game/audio';
 import { pulseHaptic } from './game/haptics';
 import { loadSettings, saveSettings, type GameSettings } from './game/settings';
+import { clearAllUserData } from './game/userData';
 import {
   clearSession,
   findInProgressLevelIds,
@@ -47,6 +48,7 @@ export class HexClearApp {
   private state: GameState | null = null;
   private levelDef: LevelDef | null = null;
   private levelIds: number[] = [];
+  private levelPars = new Map<number, number | undefined>();
   private progress = loadProgress();
   private settings = loadSettings();
   private loading = false;
@@ -74,6 +76,7 @@ export class HexClearApp {
     document.body.addEventListener('pointerdown', () => primeAudio(), { once: true });
 
     this.levelIds = await fetchLevelIndex();
+    this.levelPars = await fetchAllLevelPars(this.levelIds);
 
     const resumeLevel = findResumeLevel(this.levelIds, this.progress.highestUnlocked);
     const startLevel = resumeLevel ?? this.progress.currentLevel;
@@ -259,6 +262,8 @@ export class HexClearApp {
       inProgressLevelIds: new Set(
         findInProgressLevelIds(this.levelIds, this.progress.highestUnlocked),
       ),
+      progress: this.progress,
+      levelPars: this.levelPars,
       onSelect: (levelId) => void this.goToLevel(levelId),
       onClose: () => closeLevelPicker(),
     });
@@ -268,8 +273,33 @@ export class HexClearApp {
     openSettingsPanel({
       settings: this.settings,
       onChange: (settings) => this.applySettings(settings),
+      onResetData: () => this.handleResetData(),
       onClose: () => closeSettingsPanel(),
     });
+  }
+
+  private handleResetData(): void {
+    if (
+      !window.confirm(
+        'Reset all progress, scores, and settings? This cannot be undone.',
+      )
+    ) {
+      return;
+    }
+
+    clearAllUserData();
+    closeSettingsPanel();
+    closeLevelPicker();
+
+    this.progress = loadProgress();
+    this.settings = loadSettings();
+    this.previousBestOnWin = undefined;
+    configureAudio(this.settings);
+    applyMotionClass(this.settings.reducedMotion);
+    setContinueBanner(null);
+    showWinBanner(false);
+
+    void this.loadLevel(1);
   }
 
   private applySettings(settings: GameSettings): void {

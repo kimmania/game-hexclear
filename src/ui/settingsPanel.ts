@@ -3,6 +3,7 @@ import type { GameSettings } from '../game/settings';
 export type SettingsPanelOptions = {
   settings: GameSettings;
   onChange: (settings: GameSettings) => void;
+  onResetData: () => void;
   onClose: () => void;
 };
 
@@ -39,6 +40,16 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     (checked) => options.onChange({ ...options.settings, reducedMotion: checked }),
   );
 
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'btn settings-reset-btn';
+  resetBtn.textContent = 'Reset all data';
+  resetBtn.addEventListener('click', options.onResetData);
+
+  const resetHint = document.createElement('p');
+  resetHint.className = 'settings-reset-hint';
+  resetHint.textContent = 'Clears progress, scores, in-progress saves, and settings.';
+
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'btn modal-close';
@@ -49,7 +60,7 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     if (event.target === overlay) options.onClose();
   });
 
-  panel.append(title, soundRow, motionRow, closeBtn);
+  panel.append(title, soundRow, motionRow, resetHint, resetBtn, closeBtn);
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   closeBtn.focus();

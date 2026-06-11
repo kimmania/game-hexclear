@@ -1,10 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
+  formatLevelScore,
   isNewBestMove,
+  metPar,
+  PROGRESS_STORAGE_KEY,
   recordBestMoves,
   unlockNextLevel,
   type SavedProgress,
 } from '../src/game/storage';
+import { clearAllUserData } from '../src/game/userData';
 
 describe('progress storage', () => {
   it('preserves bestMoves when unlocking the next level', () => {
@@ -42,5 +46,61 @@ describe('progress storage', () => {
     expect(isNewBestMove(5, 4)).toBe(true);
     expect(isNewBestMove(5, 5)).toBe(false);
     expect(isNewBestMove(5, 7)).toBe(false);
+  });
+
+  it('detects par medals from best score and par', () => {
+    expect(metPar(4, 5)).toBe(true);
+    expect(metPar(5, 5)).toBe(true);
+    expect(metPar(6, 5)).toBe(false);
+    expect(metPar(4, undefined)).toBe(false);
+    expect(metPar(undefined, 5)).toBe(false);
+  });
+
+  it('formats level picker score text', () => {
+    expect(formatLevelScore(4, 5)).toBe('4 · par 5');
+    expect(formatLevelScore(6, 5)).toBe('6 · par 5');
+    expect(formatLevelScore(6, undefined)).toBe('Best 6');
+    expect(formatLevelScore(undefined, 5)).toBeNull();
+  });
+});
+
+describe('user data reset', () => {
+  const store = new Map<string, string>();
+
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      key: (index: number) => [...store.keys()][index] ?? null,
+      get length() {
+        return store.size;
+      },
+      clear: () => store.clear(),
+    });
+  });
+
+  it('clears progress, sessions, settings, and editor draft keys', () => {
+    store.set(PROGRESS_STORAGE_KEY, '{"highestUnlocked":5,"currentLevel":3}');
+    store.set(`${PROGRESS_STORAGE_KEY}:level:2`, '{"status":"playing","tiles":[]}');
+    store.set('hexclear-settings', '{"sound":false,"reducedMotion":true}');
+    store.set(
+      'hexclear-editor-draft',
+      '{"id":1,"name":"Draft","cells":[],"tiles":[],"walls":[],"holes":[]}',
+    );
+    store.set('hexclear-install-hint', 'dismissed');
+
+    clearAllUserData();
+
+    expect(store.get(PROGRESS_STORAGE_KEY)).toBeUndefined();
+    expect(store.get(`${PROGRESS_STORAGE_KEY}:level:2`)).toBeUndefined();
+    expect(store.get('hexclear-settings')).toBeUndefined();
+    expect(store.get('hexclear-editor-draft')).toBeUndefined();
+    expect(store.get('hexclear-install-hint')).toBeUndefined();
   });
 });

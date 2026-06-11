@@ -26,3 +26,22 @@ export async function fetchLevelIndex(): Promise<number[]> {
   }
   return ids;
 }
+
+export async function fetchLevelPar(levelId: number): Promise<number | undefined> {
+  const response = await fetch(`${BASE}levels/${levelId}.json`);
+  if (!response.ok) return undefined;
+  const data = (await response.json()) as { par?: unknown };
+  if (typeof data.par !== 'number' || !Number.isInteger(data.par) || data.par < 1) {
+    return undefined;
+  }
+  return data.par;
+}
+
+export async function fetchAllLevelPars(
+  levelIds: number[],
+): Promise<Map<number, number | undefined>> {
+  const entries = await Promise.all(
+    levelIds.map(async (id) => [id, await fetchLevelPar(id)] as const),
+  );
+  return new Map(entries);
+}

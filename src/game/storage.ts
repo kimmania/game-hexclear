@@ -1,6 +1,8 @@
 import type { GameState } from '../core/types';
 
-const STORAGE_KEY = 'hexclear-progress';
+export const PROGRESS_STORAGE_KEY = 'hexclear-progress';
+
+const STORAGE_KEY = PROGRESS_STORAGE_KEY;
 
 export type SavedProgress = {
   highestUnlocked: number;
@@ -66,6 +68,30 @@ export function loadSession(levelId: number): SessionSnapshot | null {
 
 export function clearSession(levelId: number): void {
   localStorage.removeItem(`${STORAGE_KEY}:level:${levelId}`);
+}
+
+export function clearAllSessions(): void {
+  const prefix = `${STORAGE_KEY}:level:`;
+  const keys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(prefix)) keys.push(key);
+  }
+  for (const key of keys) {
+    localStorage.removeItem(key);
+  }
+}
+
+export function metPar(bestMoves: number | undefined, par: number | undefined): boolean {
+  return par !== undefined && bestMoves !== undefined && bestMoves <= par;
+}
+
+export function formatLevelScore(bestMoves: number | undefined, par: number | undefined): string | null {
+  if (bestMoves === undefined) return null;
+  if (par !== undefined) {
+    return `${bestMoves} · par ${par}`;
+  }
+  return `Best ${bestMoves}`;
 }
 
 export function getCompletedLevelIds(progress: SavedProgress): Set<number> {

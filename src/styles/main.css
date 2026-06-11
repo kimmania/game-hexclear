@@ -317,7 +317,13 @@ body {
 
 .level-cell {
   position: relative;
-  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 58px;
+  padding: 4px 2px 6px;
   border: 2px solid var(--cell-edge);
   border-radius: var(--radius);
   background: var(--board);
@@ -350,6 +356,23 @@ body {
   font-size: 0.7rem;
 }
 
+.level-cell-score {
+  max-width: 100%;
+  padding: 0 2px;
+  overflow: hidden;
+  font-size: 0.62rem;
+  line-height: 1.1;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level-cell-par-medal {
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--gold, #ffc857);
+}
+
 .modal-close {
   width: 100%;
 }
@@ -368,6 +391,23 @@ body {
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
+}
+
+.settings-reset-hint {
+  margin: 12px 0 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.settings-reset-btn {
+  width: 100%;
+  margin-bottom: 8px;
+  border-color: rgba(255, 123, 107, 0.55);
+  color: #ff9a8d;
+}
+
+.settings-reset-btn:hover {
+  background: rgba(255, 123, 107, 0.12);
 }
 
 .install-hint {
