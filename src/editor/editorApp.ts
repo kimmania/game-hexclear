@@ -2,6 +2,8 @@ import { fetchLevel } from '../core/levels';
 import { gameBaseUrl } from './editMode';
 import { createEditorBoard } from './editorBoard';
 import { downloadLevelJson, prepareLevelExport, previewLevelExport } from './editorExport';
+import { importDraftFromJson, readClipboardText } from './editorImport';
+import { suggestParForDraft } from './editorPar';
 import {
   populateDraft,
   validatePopulateParams,
@@ -253,6 +255,15 @@ export async function bootstrapEditor(): Promise<void> {
   parInput.placeholder = 'Par (optional)';
   parInput.value = draft.par !== undefined ? String(draft.par) : '';
 
+  const suggestParBtn = document.createElement('button');
+  suggestParBtn.type = 'button';
+  suggestParBtn.className = 'btn';
+  suggestParBtn.textContent = 'Suggest par';
+
+  const parRow = document.createElement('div');
+  parRow.className = 'editor-par-row';
+  parRow.append(parInput, suggestParBtn);
+
   const exportActions = document.createElement('div');
   exportActions.className = 'editor-export-actions';
 
@@ -276,7 +287,22 @@ export async function bootstrapEditor(): Promise<void> {
   clearDraftBtn.className = 'btn';
   clearDraftBtn.textContent = 'Clear draft';
 
-  exportActions.append(saveDraftBtn, downloadBtn, copyBtn, clearDraftBtn);
+  const importBtn = document.createElement('button');
+  importBtn.type = 'button';
+  importBtn.className = 'btn';
+  importBtn.textContent = 'Import JSON';
+
+  const importPaste = document.createElement('textarea');
+  importPaste.className = 'editor-json editor-import-paste hidden';
+  importPaste.rows = 6;
+  importPaste.placeholder = 'Paste level JSON here, then click Import JSON again…';
+
+  const importApplyBtn = document.createElement('button');
+  importApplyBtn.type = 'button';
+  importApplyBtn.className = 'btn hidden editor-import-apply';
+  importApplyBtn.textContent = 'Apply pasted JSON';
+
+  exportActions.append(saveDraftBtn, downloadBtn, copyBtn, importBtn, clearDraftBtn);
 
   const jsonPreview = document.createElement('textarea');
   jsonPreview.className = 'editor-json';
@@ -296,7 +322,10 @@ export async function bootstrapEditor(): Promise<void> {
   saveDraftBtn.addEventListener('click', handleSaveDraft);
   downloadBtn.addEventListener('click', handleDownload);
   copyBtn.addEventListener('click', () => void handleCopy());
+  importBtn.addEventListener('click', () => void handleImport());
+  importApplyBtn.addEventListener('click', () => handleImportText(importPaste.value));
   clearDraftBtn.addEventListener('click', handleClearDraft);
+  suggestParBtn.addEventListener('click', handleSuggestPar);
 
   nameInput.addEventListener('input', () => {
     draft.name = nameInput.value.trim() || 'New level';
@@ -319,7 +348,18 @@ export async function bootstrapEditor(): Promise<void> {
     scheduleJsonPreview();
   });
 
-  exportPanel.append(nameInput, idInput, parInput, exportActions, statusEl, jsonPreview, previewStatusEl, shipHint);
+  exportPanel.append(
+    nameInput,
+    idInput,
+    parRow,
+    exportActions,
+    importPaste,
+    importApplyBtn,
+    statusEl,
+    jsonPreview,
+    previewStatusEl,
+    shipHint,
+  );
   app.append(header, toolbar, optionsBar, generatePanel, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
@@ -420,6 +460,60 @@ export async function bootstrapEditor(): Promise<void> {
     } catch {
       statusEl.textContent = `Solvable (${result.statesExplored} states). Copy from the box below.`;
     }
+  }
+
+  function replaceDraft(next: EditorDraft): void {
+    draft.id = next.id;
+    draft.name = next.name;
+    draft.cells = next.cells.map((cell) => ({ ...cell }));
+    draft.tiles = next.tiles.map((tile) => ({ ...tile }));
+    draft.walls = next.walls.map((wall) => ({ ...wall }));
+    draft.holes = next.holes.map((hole) => ({ ...hole }));
+    if (next.par !== undefined) draft.par = next.par;
+    else delete draft.par;
+  }
+
+  function handleImportText(text: string): void {
+    const result = importDraftFromJson(text);
+    if (!result.ok) {
+      statusEl.textContent = result.message;
+      return;
+    }
+
+    replaceDraft(result.draft);
+    importPaste.classList.add('hidden');
+    importApplyBtn.classList.add('hidden');
+    importPaste.value = '';
+    statusEl.textContent = `Imported “${result.draft.name}”.`;
+    render();
+  }
+
+  async function handleImport(): Promise<void> {
+    const fromClipboard = await readClipboardText();
+    if (fromClipboard) {
+      handleImportText(fromClipboard);
+      return;
+    }
+
+    importPaste.classList.remove('hidden');
+    importApplyBtn.classList.remove('hidden');
+    statusEl.textContent = 'Paste JSON below, then click Apply pasted JSON.';
+    importPaste.focus();
+  }
+
+  function handleSuggestPar(): void {
+    syncDraftMeta();
+    const result = suggestParForDraft(draft);
+    if (!result.ok) {
+      statusEl.textContent = result.message;
+      refreshJsonPreview();
+      return;
+    }
+
+    draft.par = result.par;
+    parInput.value = String(result.par);
+    statusEl.textContent = `Suggested par ${result.par} (${result.statesExplored} states explored).`;
+    scheduleJsonPreview();
   }
 
   function handleClearDraft(): void {

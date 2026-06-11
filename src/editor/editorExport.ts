@@ -1,4 +1,4 @@
-import { solveLevel } from '../core/solver';
+import { findShortestSolutionMoves } from '../core/solver';
 import { validateLevel } from '../core/validateLevel';
 import type { LevelDef } from '../core/types';
 import type { EditorDraft } from './editorState';
@@ -41,7 +41,7 @@ export function previewLevelExport(draft: EditorDraft): PreviewResult {
     };
   }
 
-  const { solvable, statesExplored } = solveLevel(level);
+  const { solvable, moves, statesExplored } = findShortestSolutionMoves(level);
   if (!solvable) {
     return {
       json,
@@ -52,11 +52,13 @@ export function previewLevelExport(draft: EditorDraft): PreviewResult {
     };
   }
 
+  const parHint = moves !== null ? ` Suggested par: ${moves}.` : '';
+
   return {
     json,
     valid: true,
     solvable: true,
-    message: `Valid and solvable (${statesExplored} states explored).`,
+    message: `Valid and solvable (${statesExplored} states explored).${parHint}`,
     statesExplored,
   };
 }
@@ -73,7 +75,7 @@ export function prepareLevelExport(draft: EditorDraft): ExportResult {
     };
   }
 
-  const { solvable, statesExplored } = solveLevel(level);
+  const { solvable, statesExplored } = findShortestSolutionMoves(level);
   if (!solvable) {
     return {
       ok: false,

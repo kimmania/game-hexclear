@@ -12,6 +12,7 @@ export type LevelPickerOptions = {
   levelPars: Map<number, number | undefined>;
   completionSummary: string;
   onSelect: (levelId: number) => void;
+  onImport: () => void;
   onClose: () => void;
 };
 
@@ -149,6 +150,14 @@ export function openLevelPicker(options: LevelPickerOptions): void {
     grid.appendChild(btn);
   }
 
+  const importBtn = document.createElement('button');
+  importBtn.type = 'button';
+  importBtn.className = 'btn';
+  importBtn.textContent = 'Import from clipboard';
+  importBtn.addEventListener('click', () => {
+    options.onImport();
+  });
+
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'btn modal-close';
@@ -159,7 +168,7 @@ export function openLevelPicker(options: LevelPickerOptions): void {
     if (event.target === overlay) options.onClose();
   });
 
-  panel.append(title, summary, legend, grid, closeBtn);
+  panel.append(title, summary, legend, grid, importBtn, closeBtn);
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   closeBtn.focus();

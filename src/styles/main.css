@@ -686,6 +686,28 @@ body {
   gap: 8px;
 }
 
+.editor-par-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editor-par-row .editor-field {
+  flex: 1;
+}
+
+.editor-import-paste {
+  margin-top: 0;
+}
+
+.editor-import-apply {
+  width: 100%;
+}
+
+.modal-panel .btn + .modal-close {
+  margin-top: 8px;
+}
+
 .editor-export-actions {
   display: flex;
   flex-wrap: wrap;

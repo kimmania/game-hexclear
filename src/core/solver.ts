@@ -11,6 +11,13 @@ export type SolverResult = {
   statesExplored: number;
 };
 
+export type ShortestSolveResult = {
+  solvable: boolean;
+  /** Minimum successful slides to clear the board, if solvable. */
+  moves: number | null;
+  statesExplored: number;
+};
+
 export function stateKey(state: GameState): string {
   const tiles = state.tiles
     .map((tile) => {
@@ -36,40 +43,48 @@ export function findHintMove(state: GameState): TileId | null {
   return [...moves].sort()[0]!;
 }
 
-export function solveLevel(level: LevelDef, options: SolverOptions = {}): SolverResult {
+export function findShortestSolutionMoves(
+  level: LevelDef,
+  options: SolverOptions = {},
+): ShortestSolveResult {
   const maxStates = options.maxStates ?? 500_000;
   const start = createGameState(level);
 
   if (start.status === 'won') {
-    return { solvable: true, statesExplored: 1 };
+    return { solvable: true, moves: 0, statesExplored: 1 };
   }
 
-  const queue: GameState[] = [start];
+  const queue: Array<{ state: GameState; depth: number }> = [{ state: start, depth: 0 }];
   const seen = new Set<string>([stateKey(start)]);
   let explored = 0;
 
   while (queue.length > 0) {
-    const state = queue.shift()!;
+    const { state, depth } = queue.shift()!;
     explored += 1;
 
     if (explored > maxStates) {
-      return { solvable: false, statesExplored: explored };
+      return { solvable: false, moves: null, statesExplored: explored };
     }
 
     for (const tileId of legalMoves(state)) {
       const next = applySlide(state, tileId);
       if (next.status === 'won') {
-        return { solvable: true, statesExplored: explored + 1 };
+        return { solvable: true, moves: depth + 1, statesExplored: explored + 1 };
       }
 
       const key = stateKey(next);
       if (seen.has(key)) continue;
       seen.add(key);
-      queue.push(next);
+      queue.push({ state: next, depth: depth + 1 });
     }
   }
 
-  return { solvable: false, statesExplored: explored };
+  return { solvable: false, moves: null, statesExplored: explored };
+}
+
+export function solveLevel(level: LevelDef, options: SolverOptions = {}): SolverResult {
+  const result = findShortestSolutionMoves(level, options);
+  return { solvable: result.solvable, statesExplored: result.statesExplored };
 }
 
 export function cloneForUndo(state: GameState): GameState {

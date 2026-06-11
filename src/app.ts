@@ -10,6 +10,7 @@ import {
   tilesRemaining,
 } from './core/board';
 import { fetchLevel, fetchLevelIndex, fetchAllLevelPars } from './core/levels';
+import { parseLevelJson, readClipboardText } from './core/levelImport';
 import { cloneForUndo, findHintMove } from './core/solver';
 import type { GameState, LevelDef, TileId } from './core/types';
 import { configureAudio, playSound, primeAudio } from './game/audio';
@@ -65,6 +66,8 @@ export class HexClearApp {
   private previousBestOnWin: number | undefined;
   /** Snapshot for single-step undo when enabled. */
   private undoSnapshot: GameState | null = null;
+  /** Community/imported level loaded from clipboard (no progress tracking). */
+  private customLevelDef: LevelDef | null = null;
   private board = createHexBoard(
     document.getElementById('board-host')!,
     (tileId) => void this.handleTileTap(tileId),
@@ -131,9 +134,14 @@ export class HexClearApp {
     applyBoardZoom(this.state.cells.length, this.settings.boardZoom);
   }
 
+  private isImportedLevel(): boolean {
+    return this.customLevelDef !== null;
+  }
+
   private async loadLevel(levelId: number): Promise<void> {
     if (!this.levelIds.includes(levelId)) return;
 
+    this.customLevelDef = null;
     this.loading = true;
     showWinPanel(false);
     this.undoSnapshot = null;
@@ -173,6 +181,43 @@ export class HexClearApp {
     }
   }
 
+  private async loadImportedLevel(level: LevelDef): Promise<void> {
+    this.customLevelDef = level;
+    this.loading = true;
+    showWinPanel(false);
+    this.undoSnapshot = null;
+    this.previousBestOnWin = undefined;
+    this.board.highlightTile(null);
+
+    try {
+      this.levelDef = level;
+      this.state = createGameState(level);
+      this.renderBoard();
+      this.syncChrome();
+      setHint('Imported level — progress is not saved. Open Levels to return to the main game.');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private async handleImportFromClipboard(): Promise<void> {
+    closeLevelPicker();
+    const text = await readClipboardText();
+    if (!text) {
+      setHint('Could not read clipboard. Copy level JSON first.');
+      return;
+    }
+
+    const result = parseLevelJson(text);
+    if (!result.ok) {
+      setHint(result.message);
+      return;
+    }
+
+    await this.loadImportedLevel(result.level);
+    setContinueBanner(null);
+  }
+
   private syncChrome(): void {
     if (!this.state) return;
 
@@ -181,9 +226,14 @@ export class HexClearApp {
     const showReplayPar =
       won && this.state.par !== undefined && this.state.moveCount > this.state.par;
 
-    updateHeader(this.state.levelName, levelId, this.levelIds.length);
-    setPrevEnabled(levelId > 1);
-    setNextEnabled(levelId < this.levelIds.length && levelId < this.progress.highestUnlocked);
+    const imported = this.isImportedLevel();
+    const displayName = imported ? `${this.state.levelName} (imported)` : this.state.levelName;
+
+    updateHeader(displayName, levelId, this.levelIds.length);
+    setPrevEnabled(!imported && levelId > 1);
+    setNextEnabled(
+      !imported && levelId < this.levelIds.length && levelId < this.progress.highestUnlocked,
+    );
     setStatusChip(statusLabel(this.state), won ? 'won' : 'playing');
     setMoveCounter(this.state.moveCount, this.state.par);
     showWinPanel(won, this.winMessage(this.state, this.previousBestOnWin), showReplayPar);
@@ -224,7 +274,7 @@ export class HexClearApp {
   }
 
   private persistSession(): void {
-    if (!this.state) return;
+    if (!this.state || this.customLevelDef) return;
     if (isWin(this.state)) {
       clearSession(this.state.levelId);
       return;
@@ -268,10 +318,14 @@ export class HexClearApp {
     this.persistSession();
 
     if (isWin(this.state)) {
-      this.previousBestOnWin = getBestMoves(this.progress, this.state.levelId);
-      this.progress = unlockNextLevel(this.progress, this.state.levelId);
-      this.progress = recordBestMoves(this.progress, this.state.levelId, this.state.moveCount);
-      saveProgress(this.progress);
+      if (!this.customLevelDef) {
+        this.previousBestOnWin = getBestMoves(this.progress, this.state.levelId);
+        this.progress = unlockNextLevel(this.progress, this.state.levelId);
+        this.progress = recordBestMoves(this.progress, this.state.levelId, this.state.moveCount);
+        saveProgress(this.progress);
+      } else {
+        this.previousBestOnWin = undefined;
+      }
       this.undoSnapshot = null;
     } else {
       this.previousBestOnWin = undefined;
@@ -284,10 +338,12 @@ export class HexClearApp {
 
     const remaining = tilesRemaining(this.state);
     if (isWin(this.state)) {
-      setHint('Board cleared!');
+      setHint(this.isImportedLevel() ? 'Imported level cleared!' : 'Board cleared!');
       playSound('win');
       pulseHaptic([10, 30, 10, 30, 20]);
-      setNextEnabled(this.state.levelId < this.levelIds.length);
+      if (!this.isImportedLevel()) {
+        setNextEnabled(this.state.levelId < this.levelIds.length);
+      }
     } else {
       setHint(`${remaining} hex${remaining === 1 ? '' : 'es'} left.`);
     }
@@ -340,26 +396,38 @@ export class HexClearApp {
     if (!this.levelDef || this.busy) return;
 
     this.state = resetGameState(this.levelDef);
-    clearSession(this.state.levelId);
+    if (!this.customLevelDef) {
+      clearSession(this.state.levelId);
+    }
     this.undoSnapshot = null;
     this.previousBestOnWin = undefined;
     this.board.highlightTile(null);
     showWinPanel(false);
     this.renderBoard();
     this.syncChrome();
-    setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
+    setHint(
+      this.isImportedLevel()
+        ? 'Imported level — progress is not saved.'
+        : 'Tap a hex to slide. Arrows move focus, Enter slides, H for hint.',
+    );
   }
 
   private handleRestart(): void {
     if (!this.levelDef || this.busy) return;
     this.state = resetGameState(this.levelDef);
-    clearSession(this.state.levelId);
+    if (!this.customLevelDef) {
+      clearSession(this.state.levelId);
+    }
     this.undoSnapshot = null;
     this.previousBestOnWin = undefined;
     this.board.highlightTile(null);
     this.renderBoard();
     this.syncChrome();
-    setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
+    setHint(
+      this.isImportedLevel()
+        ? 'Imported level — progress is not saved.'
+        : 'Tap a hex to slide. Arrows move focus, Enter slides, H for hint.',
+    );
     showWinPanel(false);
   }
 
@@ -386,6 +454,7 @@ export class HexClearApp {
         computeCompletionSummary(this.progress, this.levelIds, this.levelPars),
       ),
       onSelect: (levelId) => void this.goToLevel(levelId),
+      onImport: () => void this.handleImportFromClipboard(),
       onClose: () => closeLevelPicker(),
     });
   }
