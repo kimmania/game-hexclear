@@ -20,6 +20,7 @@ import {
   findResumeLevel,
   getCompletedLevelIds,
   getBestMoves,
+  isNewBestMove,
   loadProgress,
   loadSession,
   recordBestMoves,
@@ -50,6 +51,8 @@ export class HexClearApp {
   private settings = loadSettings();
   private loading = false;
   private busy = false;
+  /** Best move count for the current level before the latest win, if any. */
+  private previousBestOnWin: number | undefined;
   private board = createHexBoard(
     document.getElementById('board-host')!,
     (tileId) => void this.handleTileTap(tileId),
@@ -136,13 +139,13 @@ export class HexClearApp {
     setNextEnabled(levelId < this.levelIds.length && levelId < this.progress.highestUnlocked);
     setStatusChip(statusLabel(this.state), isWin(this.state) ? 'won' : 'playing');
     setMoveCounter(this.state.moveCount, this.state.par);
-    showWinBanner(isWin(this.state), this.winMessage(this.state));
+    showWinBanner(isWin(this.state), this.winMessage(this.state, this.previousBestOnWin));
   }
 
-  private winMessage(state: GameState): string {
+  private winMessage(state: GameState, previousBest?: number): string {
     const moves = state.moveCount;
     const par = state.par;
-    const best = getBestMoves(this.progress, state.levelId);
+    const newBest = isNewBestMove(previousBest, moves);
 
     if (par === undefined) {
       return `Level cleared in ${moves} move${moves === 1 ? '' : 's'}!`;
@@ -153,7 +156,7 @@ export class HexClearApp {
         ? `Par ${par} — nice!`
         : `${moves - par} over par ${par}`;
 
-    if (best !== undefined && moves <= best) {
+    if (newBest) {
       return `Cleared in ${moves} moves. ${parText} New best!`;
     }
 
@@ -203,9 +206,12 @@ export class HexClearApp {
     this.persistSession();
 
     if (isWin(this.state)) {
+      this.previousBestOnWin = getBestMoves(this.progress, this.state.levelId);
       this.progress = unlockNextLevel(this.progress, this.state.levelId);
       this.progress = recordBestMoves(this.progress, this.state.levelId, this.state.moveCount);
       saveProgress(this.progress);
+    } else {
+      this.previousBestOnWin = undefined;
     }
 
     this.syncChrome();

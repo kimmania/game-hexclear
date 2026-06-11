@@ -104,10 +104,15 @@ export function unlockNextLevel(progress: SavedProgress, completedLevelId: numbe
   completed.add(completedLevelId);
   const next = completedLevelId + 1;
   return {
+    ...progress,
     highestUnlocked: Math.max(progress.highestUnlocked, next),
     currentLevel: next,
     completedLevels: [...completed].sort((a, b) => a - b),
   };
+}
+
+export function isNewBestMove(previousBest: number | undefined, moves: number): boolean {
+  return previousBest === undefined || moves < previousBest;
 }
 
 export function recordBestMoves(
