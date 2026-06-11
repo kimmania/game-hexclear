@@ -1,7 +1,12 @@
 import { fetchLevel } from '../core/levels';
 import { gameBaseUrl } from './editMode';
 import { createEditorBoard } from './editorBoard';
-import { downloadLevelJson, prepareLevelExport } from './editorExport';
+import { downloadLevelJson, prepareLevelExport, previewLevelExport } from './editorExport';
+import {
+  populateDraft,
+  validatePopulateParams,
+  type PopulateParams,
+} from './editorPopulate';
 import {
   clearEditorDraft,
   loadEditorDraft,
@@ -124,6 +129,96 @@ export async function bootstrapEditor(): Promise<void> {
 
   optionsBar.append(frozenLabel, clearBtn);
 
+  const generatePanel = document.createElement('section');
+  generatePanel.className = 'editor-generate';
+
+  const generateTitle = document.createElement('h2');
+  generateTitle.className = 'editor-generate-title';
+  generateTitle.textContent = 'Generate board';
+
+  const generateFields = document.createElement('div');
+  generateFields.className = 'editor-generate-fields';
+
+  const generateDefaults: PopulateParams = {
+    cellCount: 7,
+    tileCount: 4,
+    wallCount: 0,
+    holeCount: 0,
+    frozenCount: 0,
+  };
+
+  const generateInputs: Record<keyof PopulateParams, HTMLInputElement> = {
+    cellCount: document.createElement('input'),
+    tileCount: document.createElement('input'),
+    wallCount: document.createElement('input'),
+    holeCount: document.createElement('input'),
+    frozenCount: document.createElement('input'),
+  };
+
+  const generateLabels: Record<keyof PopulateParams, string> = {
+    cellCount: 'Cells',
+    tileCount: 'Tiles',
+    wallCount: 'Walls',
+    holeCount: 'Holes',
+    frozenCount: 'Frozen',
+  };
+
+  for (const key of Object.keys(generateDefaults) as (keyof PopulateParams)[]) {
+    const label = document.createElement('label');
+    label.className = 'editor-generate-label';
+
+    const input = generateInputs[key];
+    input.type = 'number';
+    input.min = key === 'cellCount' ? '1' : '0';
+    input.className = 'editor-field';
+    input.value = String(generateDefaults[key]);
+    input.setAttribute('aria-label', generateLabels[key]);
+
+    label.append(generateLabels[key], input);
+    generateFields.appendChild(label);
+  }
+
+  const populateBtn = document.createElement('button');
+  populateBtn.type = 'button';
+  populateBtn.className = 'btn btn-primary editor-populate-btn';
+  populateBtn.textContent = 'Populate board';
+
+  populateBtn.addEventListener('click', () => {
+    const params: PopulateParams = {
+      cellCount: Math.floor(Number(generateInputs.cellCount.value)) || 0,
+      tileCount: Math.floor(Number(generateInputs.tileCount.value)) || 0,
+      wallCount: Math.floor(Number(generateInputs.wallCount.value)) || 0,
+      holeCount: Math.floor(Number(generateInputs.holeCount.value)) || 0,
+      frozenCount: Math.floor(Number(generateInputs.frozenCount.value)) || 0,
+    };
+
+    const check = validatePopulateParams(params);
+    if (!check.ok) {
+      statusEl.textContent = check.message;
+      return;
+    }
+
+    const hasContent =
+      draft.cells.length > 1 ||
+      draft.tiles.length > 0 ||
+      draft.walls.length > 0 ||
+      draft.holes.length > 0;
+    if (hasContent && !window.confirm('Replace the current board with a generated layout?')) {
+      return;
+    }
+
+    const result = populateDraft(draft, params);
+    if (!result.ok) {
+      statusEl.textContent = result.message;
+      return;
+    }
+
+    statusEl.textContent = `Generated ${params.cellCount} cells, ${params.tileCount} tiles. Edit as needed.`;
+    render();
+  });
+
+  generatePanel.append(generateTitle, generateFields, populateBtn);
+
   const hint = document.createElement('p');
   hint.className = 'hint editor-hint';
 
@@ -187,7 +282,11 @@ export async function bootstrapEditor(): Promise<void> {
   jsonPreview.className = 'editor-json';
   jsonPreview.readOnly = true;
   jsonPreview.rows = 8;
-  jsonPreview.placeholder = 'Validated JSON appears here…';
+  jsonPreview.placeholder = 'Level JSON preview…';
+
+  const previewStatusEl = document.createElement('p');
+  previewStatusEl.className = 'editor-preview-status';
+  previewStatusEl.setAttribute('role', 'status');
 
   const shipHint = document.createElement('p');
   shipHint.className = 'editor-ship-hint';
@@ -201,10 +300,12 @@ export async function bootstrapEditor(): Promise<void> {
 
   nameInput.addEventListener('input', () => {
     draft.name = nameInput.value.trim() || 'New level';
+    scheduleJsonPreview();
   });
 
   idInput.addEventListener('change', () => {
     draft.id = Math.max(1, Math.floor(Number(idInput.value)) || 1);
+    scheduleJsonPreview();
   });
 
   parInput.addEventListener('change', () => {
@@ -212,13 +313,14 @@ export async function bootstrapEditor(): Promise<void> {
     if (!Number.isFinite(value) || value < 1) {
       delete draft.par;
       parInput.value = '';
-      return;
+    } else {
+      draft.par = value;
     }
-    draft.par = value;
+    scheduleJsonPreview();
   });
 
-  exportPanel.append(nameInput, idInput, parInput, exportActions, statusEl, jsonPreview, shipHint);
-  app.append(header, toolbar, optionsBar, hint, boardHost, exportPanel);
+  exportPanel.append(nameInput, idInput, parInput, exportActions, statusEl, jsonPreview, previewStatusEl, shipHint);
+  app.append(header, toolbar, optionsBar, generatePanel, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
     applyTool(draft, tool, coord, {
@@ -251,10 +353,35 @@ export async function bootstrapEditor(): Promise<void> {
     parInput.value = draft.par !== undefined ? String(draft.par) : '';
   }
 
+  function refreshJsonPreview(): void {
+    syncDraftMeta();
+    const preview = previewLevelExport(draft);
+    jsonPreview.value = preview.json;
+    previewStatusEl.textContent = preview.message;
+    previewStatusEl.dataset.variant = preview.solvable
+      ? 'ok'
+      : preview.valid
+        ? 'warn'
+        : 'error';
+  }
+
+  let previewTimer: number | null = null;
+
+  function scheduleJsonPreview(): void {
+    if (previewTimer !== null) {
+      window.clearTimeout(previewTimer);
+    }
+    previewTimer = window.setTimeout(() => {
+      previewTimer = null;
+      refreshJsonPreview();
+    }, 200);
+  }
+
   function render(): void {
     syncDraftMeta();
     board.render(draft, tool);
     saveEditorDraft(draft);
+    scheduleJsonPreview();
   }
 
   function handleSaveDraft(): void {
@@ -268,11 +395,11 @@ export async function bootstrapEditor(): Promise<void> {
     const result = prepareLevelExport(draft);
     if (!result.ok) {
       statusEl.textContent = result.message;
-      jsonPreview.value = '';
+      refreshJsonPreview();
       return;
     }
-    jsonPreview.value = result.json;
     saveEditorDraft(draft);
+    refreshJsonPreview();
     downloadLevelJson(result.level, result.json);
     statusEl.textContent = `Downloaded ${result.level.id}.json (solvable, ${result.statesExplored} states).`;
   }
@@ -282,11 +409,11 @@ export async function bootstrapEditor(): Promise<void> {
     const result = prepareLevelExport(draft);
     if (!result.ok) {
       statusEl.textContent = result.message;
-      jsonPreview.value = '';
+      refreshJsonPreview();
       return;
     }
-    jsonPreview.value = result.json;
     saveEditorDraft(draft);
+    refreshJsonPreview();
     try {
       await navigator.clipboard.writeText(result.json);
       statusEl.textContent = `JSON copied (${result.statesExplored} states explored).`;
@@ -306,4 +433,5 @@ export async function bootstrapEditor(): Promise<void> {
   parInput.value = draft.par !== undefined ? String(draft.par) : '';
   selectTool('cell');
   render();
+  refreshJsonPreview();
 }

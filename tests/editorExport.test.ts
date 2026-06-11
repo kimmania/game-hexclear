@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prepareLevelExport } from '../src/editor/editorExport';
+import { prepareLevelExport, previewLevelExport } from '../src/editor/editorExport';
 import { createEmptyDraft, draftFromLevel } from '../src/editor/editorState';
 import type { LevelDef } from '../src/core/types';
 
@@ -26,5 +26,20 @@ describe('editor export', () => {
     };
     const result = prepareLevelExport(draftFromLevel(level));
     expect(result.ok).toBe(true);
+  });
+
+  it('previews json even when not solvable', () => {
+    const draft = createEmptyDraft();
+    draft.cells = [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+    ];
+    draft.tiles = [
+      { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
+      { id: 't2', q: 1, r: 0, dir: 3, color: 'gold' },
+    ];
+    const preview = previewLevelExport(draft);
+    expect(preview.json).toContain('"tiles"');
+    expect(preview.valid).toBe(true);
   });
 });

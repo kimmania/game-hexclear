@@ -69,6 +69,8 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 
 Set **Frozen** when placing tiles (color is set automatically from arrow direction). Optional **Par** is the target move count.
 
+Use **Generate board** to auto-fill a connected hex layout: set counts for cells, tiles (random arrows), walls, holes, and frozen tiles, then **Populate board** to replace the draft. Tweak the result by hand before export.
+
 **Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, add the id to `index.json`, run `npm run validate-levels`.
 
 Edit an existing level: `?edit=1&level=5`

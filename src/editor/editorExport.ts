@@ -18,6 +18,49 @@ export type ExportFailure = {
 
 export type ExportResult = ExportSuccess | ExportFailure;
 
+export type PreviewResult = {
+  json: string;
+  valid: boolean;
+  solvable: boolean;
+  message: string;
+  statesExplored?: number;
+};
+
+export function previewLevelExport(draft: EditorDraft): PreviewResult {
+  const level = toLevelDef(draft);
+  const json = JSON.stringify(level, null, 2);
+
+  try {
+    validateLevel(level);
+  } catch (error) {
+    return {
+      json,
+      valid: false,
+      solvable: false,
+      message: error instanceof Error ? error.message : 'Invalid level',
+    };
+  }
+
+  const { solvable, statesExplored } = solveLevel(level);
+  if (!solvable) {
+    return {
+      json,
+      valid: true,
+      solvable: false,
+      message: `Not solvable (${statesExplored} states explored).`,
+      statesExplored,
+    };
+  }
+
+  return {
+    json,
+    valid: true,
+    solvable: true,
+    message: `Valid and solvable (${statesExplored} states explored).`,
+    statesExplored,
+  };
+}
+
 export function prepareLevelExport(draft: EditorDraft): ExportResult {
   const level = toLevelDef(draft);
 
