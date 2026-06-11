@@ -4,12 +4,18 @@ export function bindControls(handlers: {
   onPrev: () => void;
   onLevels: () => void;
   onSettings: () => void;
+  onHint: () => void;
+  onUndo: () => void;
+  onReplayPar: () => void;
 }): void {
   document.getElementById('restart')?.addEventListener('click', handlers.onRestart);
   document.getElementById('next-level')?.addEventListener('click', handlers.onNext);
   document.getElementById('prev-level')?.addEventListener('click', handlers.onPrev);
   document.getElementById('levels-btn')?.addEventListener('click', handlers.onLevels);
   document.getElementById('settings-btn')?.addEventListener('click', handlers.onSettings);
+  document.getElementById('hint-btn')?.addEventListener('click', handlers.onHint);
+  document.getElementById('undo-btn')?.addEventListener('click', handlers.onUndo);
+  document.getElementById('replay-par')?.addEventListener('click', handlers.onReplayPar);
 }
 
 export function updateHeader(levelName: string, levelId: number, total: number): void {
@@ -22,11 +28,17 @@ export function updateHeader(levelName: string, levelId: number, total: number):
   }
 }
 
-export function showWinBanner(show: boolean, message = 'Level cleared!'): void {
+export function showWinPanel(
+  show: boolean,
+  message = 'Level cleared!',
+  showReplayPar = false,
+): void {
+  const panel = document.getElementById('win-panel');
   const banner = document.getElementById('win-banner');
-  if (!banner) return;
-  banner.textContent = message;
-  banner.classList.toggle('hidden', !show);
+  const replayBtn = document.getElementById('replay-par');
+  if (panel) panel.classList.toggle('hidden', !show);
+  if (banner) banner.textContent = message;
+  if (replayBtn) replayBtn.classList.toggle('hidden', !show || !showReplayPar);
 }
 
 export function setMoveCounter(moves: number, par?: number): void {
@@ -46,6 +58,21 @@ export function setNextEnabled(enabled: boolean): void {
 
 export function setPrevEnabled(enabled: boolean): void {
   const btn = document.getElementById('prev-level') as HTMLButtonElement | null;
+  if (btn) btn.disabled = !enabled;
+}
+
+export function setHintEnabled(enabled: boolean): void {
+  const btn = document.getElementById('hint-btn') as HTMLButtonElement | null;
+  if (btn) btn.disabled = !enabled;
+}
+
+export function setUndoVisible(visible: boolean): void {
+  const btn = document.getElementById('undo-btn');
+  if (btn) btn.classList.toggle('hidden', !visible);
+}
+
+export function setUndoEnabled(enabled: boolean): void {
+  const btn = document.getElementById('undo-btn') as HTMLButtonElement | null;
   if (btn) btn.disabled = !enabled;
 }
 
@@ -71,4 +98,9 @@ export function setContinueBanner(text: string | null): void {
   }
   banner.textContent = text;
   banner.classList.remove('hidden');
+}
+
+/** @deprecated Use showWinPanel */
+export function showWinBanner(show: boolean, message = 'Level cleared!'): void {
+  showWinPanel(show, message, false);
 }

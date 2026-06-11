@@ -29,6 +29,13 @@ function legalMoves(state: GameState): TileId[] {
     .map((tile) => tile.id);
 }
 
+/** Returns one slideable tile id, or null if none. */
+export function findHintMove(state: GameState): TileId | null {
+  const moves = legalMoves(state);
+  if (moves.length === 0) return null;
+  return [...moves].sort()[0]!;
+}
+
 export function solveLevel(level: LevelDef, options: SolverOptions = {}): SolverResult {
   const maxStates = options.maxStates ?? 500_000;
   const start = createGameState(level);

@@ -3,7 +3,7 @@ import { applySlide, canSlideTile, createGameState, isWin, recordMove } from '..
 import { AXIAL_DIRS, buildCellSet, coordKey, directionVector, slidePath, stepCoord } from '../src/core/hex';
 import { axialToPixel, slideDirectionAngleDeg } from '../src/ui/hexLayout';
 import type { LevelDef } from '../src/core/types';
-import { solveLevel } from '../src/core/solver';
+import { findHintMove, solveLevel } from '../src/core/solver';
 import { validateLevel } from '../src/core/validateLevel';
 
 describe('hex math', () => {
@@ -204,5 +204,42 @@ describe('levels', () => {
 
   it('solves bundled level 1', () => {
     expect(solveLevel(level1).solvable).toBe(true);
+  });
+});
+
+describe('hints', () => {
+  const level1: LevelDef = {
+    id: 1,
+    name: 'Warm up',
+    cells: [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+      { q: 2, r: 0 },
+    ],
+    tiles: [
+      { id: 't1', q: 0, r: 0, dir: 0 },
+      { id: 't2', q: 1, r: 0, dir: 0 },
+    ],
+  };
+
+  it('finds a slideable tile when one exists', () => {
+    const state = createGameState(level1);
+    expect(findHintMove(state)).toBe('t2');
+  });
+
+  it('returns null when no legal moves exist', () => {
+    const state = createGameState({
+      id: 99,
+      name: 'Stuck',
+      cells: [
+        { q: 0, r: 0 },
+        { q: 1, r: 0 },
+      ],
+      tiles: [
+        { id: 'a', q: 0, r: 0, dir: 0 },
+        { id: 'b', q: 1, r: 0, dir: 3 },
+      ],
+    });
+    expect(findHintMove(state)).toBeNull();
   });
 });

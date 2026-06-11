@@ -34,6 +34,7 @@ export type HexBoard = {
   render: (state: GameState) => void;
   animateSlide: (state: GameState, tileId: TileId, path: HexCoord[]) => Promise<void>;
   flashBlocked: (tileId: TileId) => void;
+  highlightTile: (tileId: TileId | null) => void;
 };
 
 export function createHexBoard(
@@ -47,6 +48,20 @@ export function createHexBoard(
   host.replaceChildren(svg);
 
   let animating = false;
+  let highlightedTileId: TileId | null = null;
+
+  function applyHighlight(): void {
+    svg.querySelectorAll('.hex-tile-hint').forEach((node) => {
+      node.classList.remove('hex-tile-hint');
+    });
+    if (!highlightedTileId) return;
+    svg.querySelector(`[data-tile-id="${highlightedTileId}"]`)?.classList.add('hex-tile-hint');
+  }
+
+  function highlightTile(tileId: TileId | null): void {
+    highlightedTileId = tileId;
+    applyHighlight();
+  }
 
   function render(state: GameState): void {
     if (animating) return;
@@ -119,6 +134,8 @@ export function createHexBoard(
 
       tilesLayer.appendChild(group);
     }
+
+    applyHighlight();
   }
 
   function flashBlocked(tileId: TileId): void {
@@ -170,5 +187,5 @@ export function createHexBoard(
     });
   }
 
-  return { svg, render, animateSlide, flashBlocked };
+  return { svg, render, animateSlide, flashBlocked, highlightTile };
 }

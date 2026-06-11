@@ -40,6 +40,13 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     (checked) => options.onChange({ ...options.settings, reducedMotion: checked }),
   );
 
+  const undoRow = createToggleRow(
+    'undo-toggle',
+    'Undo last move',
+    options.settings.undo,
+    (checked) => options.onChange({ ...options.settings, undo: checked }),
+  );
+
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
   resetBtn.className = 'btn settings-reset-btn';
@@ -60,7 +67,7 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     if (event.target === overlay) options.onClose();
   });
 
-  panel.append(title, soundRow, motionRow, resetHint, resetBtn, closeBtn);
+  panel.append(title, soundRow, motionRow, undoRow, resetHint, resetBtn, closeBtn);
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   closeBtn.focus();

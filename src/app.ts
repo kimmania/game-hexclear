@@ -10,6 +10,7 @@ import {
   tilesRemaining,
 } from './core/board';
 import { fetchLevel, fetchLevelIndex, fetchAllLevelPars } from './core/levels';
+import { cloneForUndo, findHintMove } from './core/solver';
 import type { GameState, LevelDef, TileId } from './core/types';
 import { configureAudio, playSound, primeAudio } from './game/audio';
 import { pulseHaptic } from './game/haptics';
@@ -33,11 +34,14 @@ import {
   bindControls,
   setContinueBanner,
   setHint,
+  setHintEnabled,
   setMoveCounter,
   setNextEnabled,
   setPrevEnabled,
   setStatusChip,
-  showWinBanner,
+  setUndoEnabled,
+  setUndoVisible,
+  showWinPanel,
   updateHeader,
 } from './ui/controls';
 import { createHexBoard } from './ui/hexBoard';
@@ -55,6 +59,8 @@ export class HexClearApp {
   private busy = false;
   /** Best move count for the current level before the latest win, if any. */
   private previousBestOnWin: number | undefined;
+  /** Snapshot for single-step undo when enabled. */
+  private undoSnapshot: GameState | null = null;
   private board = createHexBoard(
     document.getElementById('board-host')!,
     (tileId) => void this.handleTileTap(tileId),
@@ -63,6 +69,7 @@ export class HexClearApp {
   async init(): Promise<void> {
     configureAudio(this.settings);
     applyMotionClass(this.settings.reducedMotion);
+    setUndoVisible(this.settings.undo);
 
     bindControls({
       onRestart: () => this.handleRestart(),
@@ -70,6 +77,9 @@ export class HexClearApp {
       onPrev: () => void this.goToLevel(this.getCurrentLevelId() - 1),
       onLevels: () => this.openLevels(),
       onSettings: () => this.openSettings(),
+      onHint: () => this.handleHint(),
+      onUndo: () => this.handleUndo(),
+      onReplayPar: () => this.handleReplayForPar(),
     });
 
     document.getElementById('level-meta')?.addEventListener('click', () => this.openLevels());
@@ -97,7 +107,9 @@ export class HexClearApp {
     if (!this.levelIds.includes(levelId)) return;
 
     this.loading = true;
-    showWinBanner(false);
+    showWinPanel(false);
+    this.undoSnapshot = null;
+    this.board.highlightTile(null);
 
     try {
       this.levelDef = await fetchLevel(levelId);
@@ -137,12 +149,21 @@ export class HexClearApp {
     if (!this.state) return;
 
     const levelId = this.state.levelId;
+    const won = isWin(this.state);
+    const showReplayPar =
+      won && this.state.par !== undefined && this.state.moveCount > this.state.par;
+
     updateHeader(this.state.levelName, levelId, this.levelIds.length);
     setPrevEnabled(levelId > 1);
     setNextEnabled(levelId < this.levelIds.length && levelId < this.progress.highestUnlocked);
-    setStatusChip(statusLabel(this.state), isWin(this.state) ? 'won' : 'playing');
+    setStatusChip(statusLabel(this.state), won ? 'won' : 'playing');
     setMoveCounter(this.state.moveCount, this.state.par);
-    showWinBanner(isWin(this.state), this.winMessage(this.state, this.previousBestOnWin));
+    showWinPanel(won, this.winMessage(this.state, this.previousBestOnWin), showReplayPar);
+    setHintEnabled(!won && !this.busy && !this.loading);
+    setUndoVisible(this.settings.undo);
+    setUndoEnabled(
+      this.settings.undo && !won && !this.busy && !this.loading && this.undoSnapshot !== null,
+    );
   }
 
   private winMessage(state: GameState, previousBest?: number): string {
@@ -183,8 +204,16 @@ export class HexClearApp {
     saveSession(this.state.levelId, this.state);
   }
 
+  private pushUndoSnapshot(): void {
+    if (!this.settings.undo || !this.state || isWin(this.state)) return;
+    this.undoSnapshot = cloneForUndo(this.state);
+  }
+
   private async handleTileTap(tileId: TileId): Promise<void> {
     if (!this.state || this.loading || this.busy || isWin(this.state)) return;
+
+    this.pushUndoSnapshot();
+    this.board.highlightTile(null);
 
     playSound('tap');
     pulseHaptic(4);
@@ -202,6 +231,8 @@ export class HexClearApp {
     }
 
     this.busy = true;
+    setHintEnabled(false);
+    setUndoEnabled(false);
 
     await this.board.animateSlide(this.state, tileId, result.path);
     this.state = applySlide(this.state, tileId);
@@ -213,6 +244,7 @@ export class HexClearApp {
       this.progress = unlockNextLevel(this.progress, this.state.levelId);
       this.progress = recordBestMoves(this.progress, this.state.levelId, this.state.moveCount);
       saveProgress(this.progress);
+      this.undoSnapshot = null;
     } else {
       this.previousBestOnWin = undefined;
     }
@@ -233,16 +265,73 @@ export class HexClearApp {
     }
 
     this.busy = false;
+    this.syncChrome();
+  }
+
+  private handleHint(): void {
+    if (!this.state || this.loading || this.busy || isWin(this.state)) return;
+
+    const tileId = findHintMove(this.state);
+    if (!tileId) {
+      this.board.highlightTile(null);
+      setHint('No legal moves right now.');
+      return;
+    }
+
+    this.board.highlightTile(tileId);
+    setHint('Highlighted hex can slide.');
+    playSound('tap');
+    pulseHaptic(3);
+  }
+
+  private handleUndo(): void {
+    if (
+      !this.settings.undo ||
+      !this.undoSnapshot ||
+      !this.state ||
+      this.busy ||
+      this.loading ||
+      isWin(this.state)
+    ) {
+      return;
+    }
+
+    this.state = cloneForUndo(this.undoSnapshot);
+    this.undoSnapshot = null;
+    this.board.highlightTile(null);
+    this.board.render(this.state);
+    this.persistSession();
+    this.syncChrome();
+    setHint('Undid last move.');
+    playSound('tap');
+    pulseHaptic(3);
+  }
+
+  private handleReplayForPar(): void {
+    if (!this.levelDef || this.busy) return;
+
+    this.state = resetGameState(this.levelDef);
+    clearSession(this.state.levelId);
+    this.undoSnapshot = null;
+    this.previousBestOnWin = undefined;
+    this.board.highlightTile(null);
+    showWinPanel(false);
+    this.board.render(this.state);
+    this.syncChrome();
+    setHint('Tap a hex to slide it off the board.');
   }
 
   private handleRestart(): void {
     if (!this.levelDef || this.busy) return;
     this.state = resetGameState(this.levelDef);
     clearSession(this.state.levelId);
+    this.undoSnapshot = null;
+    this.previousBestOnWin = undefined;
+    this.board.highlightTile(null);
     this.board.render(this.state);
     this.syncChrome();
     setHint('Tap a hex to slide it off the board.');
-    showWinBanner(false);
+    showWinPanel(false);
   }
 
   private async goToLevel(levelId: number): Promise<void> {
@@ -294,19 +383,26 @@ export class HexClearApp {
     this.progress = loadProgress();
     this.settings = loadSettings();
     this.previousBestOnWin = undefined;
+    this.undoSnapshot = null;
     configureAudio(this.settings);
     applyMotionClass(this.settings.reducedMotion);
+    setUndoVisible(this.settings.undo);
     setContinueBanner(null);
-    showWinBanner(false);
+    showWinPanel(false);
 
     void this.loadLevel(1);
   }
 
   private applySettings(settings: GameSettings): void {
+    if (!settings.undo) {
+      this.undoSnapshot = null;
+    }
     this.settings = settings;
     saveSettings(settings);
     configureAudio(settings);
     applyMotionClass(settings.reducedMotion);
+    setUndoVisible(settings.undo);
+    this.syncChrome();
   }
 }
 

@@ -1,6 +1,8 @@
 export type GameSettings = {
   sound: boolean;
   reducedMotion: boolean;
+  /** Allow one-step undo during play. */
+  undo: boolean;
 };
 
 const STORAGE_KEY = 'hexclear-settings';
@@ -8,6 +10,7 @@ const STORAGE_KEY = 'hexclear-settings';
 const DEFAULTS: GameSettings = {
   sound: true,
   reducedMotion: false,
+  undo: false,
 };
 
 export function loadSettings(): GameSettings {
@@ -18,6 +21,7 @@ export function loadSettings(): GameSettings {
     return {
       sound: parsed.sound ?? DEFAULTS.sound,
       reducedMotion: parsed.reducedMotion ?? prefersReducedMotion(),
+      undo: parsed.undo ?? DEFAULTS.undo,
     };
   } catch {
     return { ...DEFAULTS };

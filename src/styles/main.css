@@ -194,6 +194,14 @@ body {
   filter: saturate(0.75);
 }
 
+.hex-tile-hint {
+  filter: drop-shadow(0 0 6px rgba(255, 200, 87, 0.95));
+}
+
+.hex-tile-hint .hex-tile-arrow path {
+  fill: #ffc857;
+}
+
 .hex-tile-locked {
   opacity: 0.88;
 }
@@ -268,13 +276,28 @@ body {
   color: #102033;
 }
 
+.win-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .win-banner {
+  margin: 0;
   text-align: center;
   padding: 10px;
   border-radius: var(--radius);
   background: rgba(95, 212, 164, 0.15);
   color: var(--win);
   font-weight: 700;
+}
+
+.assist-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding-bottom: 4px;
 }
 
 .modal-overlay {

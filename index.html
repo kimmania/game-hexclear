@@ -50,7 +50,17 @@
         <div id="board-host" class="board-host"></div>
       </main>
 
-      <div id="win-banner" class="win-banner hidden" role="status">Level cleared!</div>
+      <div id="win-panel" class="win-panel hidden" role="status" aria-live="polite">
+        <p id="win-banner" class="win-banner">Level cleared!</p>
+        <button type="button" id="replay-par" class="btn btn-primary hidden">
+          Replay for par
+        </button>
+      </div>
+
+      <div class="assist-controls" aria-label="Assist controls">
+        <button type="button" id="hint-btn" class="btn">Hint</button>
+        <button type="button" id="undo-btn" class="btn hidden">Undo</button>
+      </div>
 
       <footer class="controls" aria-label="Game controls">
         <button type="button" id="prev-level" class="btn" disabled>Prev</button>
