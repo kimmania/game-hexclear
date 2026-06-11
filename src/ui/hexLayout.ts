@@ -102,3 +102,59 @@ export function createDirectionArrow(
 
   return group;
 }
+
+/** Barrier on the edge from which slides in `dir` are blocked. */
+export function createOneWayWallMarker(
+  q: number,
+  r: number,
+  dir: HexDirection,
+): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const entryFrom = ((dir + 3) % 6) as HexDirection;
+  const angle = slideDirectionAngleDeg(q, r, entryFrom);
+
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  group.setAttribute('class', 'hex-oneway');
+  group.setAttribute('transform', `translate(${cx} ${cy}) rotate(${angle})`);
+  group.setAttribute('pointer-events', 'none');
+
+  const bar = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  bar.setAttribute('x1', String(HEX_RADIUS - 4));
+  bar.setAttribute('y1', '-12');
+  bar.setAttribute('x2', String(HEX_RADIUS - 4));
+  bar.setAttribute('y2', '12');
+  bar.setAttribute('class', 'hex-oneway-bar');
+  group.appendChild(bar);
+
+  const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  chevron.setAttribute('d', 'M 8 -8 L 18 0 L 8 8');
+  chevron.setAttribute('class', 'hex-oneway-chevron');
+  group.appendChild(chevron);
+
+  return group;
+}
+
+export function createRotatorMarker(q: number, r: number): SVGGElement {
+  const { x: cx, y: cy } = axialToPixel(q, r);
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  group.setAttribute('class', 'hex-rotator');
+  group.setAttribute('transform', `translate(${cx} ${cy})`);
+  group.setAttribute('pointer-events', 'none');
+
+  const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  ring.setAttribute('r', '14');
+  ring.setAttribute('class', 'hex-rotator-ring');
+  group.appendChild(ring);
+
+  const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  arc.setAttribute('d', 'M 10 -4 A 12 12 0 1 1 4 10');
+  arc.setAttribute('class', 'hex-rotator-arc');
+  group.appendChild(arc);
+
+  const tip = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  tip.setAttribute('points', '4 10 8 6 0 6');
+  tip.setAttribute('class', 'hex-rotator-tip');
+  group.appendChild(tip);
+
+  return group;
+}

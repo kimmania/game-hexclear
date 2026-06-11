@@ -1,5 +1,5 @@
 import { validateLevel } from './validateLevel';
-import type { HexDirection, LevelDef, TileDef } from './types';
+import type { HexDirection, LevelDef, OneWayWallDef, RotatorDef, TileDef } from './types';
 
 export type ParseLevelSuccess = {
   ok: true;
@@ -39,7 +39,42 @@ function normalizeTile(value: unknown): TileDef | null {
     dir: value.dir as HexDirection,
   };
   if (value.frozen === true) tile.frozen = true;
+  if (typeof value.linked === 'string') tile.linked = value.linked;
   return tile;
+}
+
+function normalizeOneWayWall(value: unknown): OneWayWallDef | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r) ||
+    typeof value.dir !== 'number' ||
+    !Number.isInteger(value.dir) ||
+    value.dir < 0 ||
+    value.dir > 5
+  ) {
+    return null;
+  }
+  return { q: value.q, r: value.r, dir: value.dir as HexDirection };
+}
+
+function normalizeRotator(value: unknown): RotatorDef | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r)
+  ) {
+    return null;
+  }
+  const rotator: RotatorDef = { q: value.q, r: value.r };
+  if (value.turn === 1 || value.turn === -1 || value.turn === 2) {
+    rotator.turn = value.turn;
+  }
+  return rotator;
 }
 
 function normalizeCoord(value: unknown): { q: number; r: number } | null {
@@ -101,6 +136,18 @@ export function parseLevelJson(text: string): ParseLevelResult {
     return { ok: false, message: 'Invalid hole coordinates.' };
   }
 
+  const oneWayWalls = Array.isArray(raw.oneWayWalls)
+    ? raw.oneWayWalls.map(normalizeOneWayWall)
+    : [];
+  if (oneWayWalls.some((wall) => wall === null)) {
+    return { ok: false, message: 'Invalid one-way wall definition.' };
+  }
+
+  const rotators = Array.isArray(raw.rotators) ? raw.rotators.map(normalizeRotator) : [];
+  if (rotators.some((rotator) => rotator === null)) {
+    return { ok: false, message: 'Invalid rotator definition.' };
+  }
+
   const level: LevelDef = {
     id: raw.id,
     name: raw.name.trim(),
@@ -113,6 +160,12 @@ export function parseLevelJson(text: string): ParseLevelResult {
   }
   if (holes.length > 0) {
     level.holes = holes as { q: number; r: number }[];
+  }
+  if (oneWayWalls.length > 0) {
+    level.oneWayWalls = oneWayWalls as OneWayWallDef[];
+  }
+  if (rotators.length > 0) {
+    level.rotators = rotators as RotatorDef[];
   }
 
   if (raw.par !== undefined) {

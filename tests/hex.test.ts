@@ -141,8 +141,8 @@ describe('par', () => {
         { q: 1, r: 0 },
       ],
       tiles: [
-        { id: 'a', q: 0, r: 0, dir: 0, color: 'coral' },
-        { id: 'b', q: 1, r: 0, dir: 0, color: 'sky' },
+        { id: 'a', q: 0, r: 0, dir: 0 },
+        { id: 'b', q: 1, r: 0, dir: 0 },
       ],
     };
     const state = createGameState(level);
@@ -173,6 +173,7 @@ describe('holes', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.path.map(coordKey)).toEqual(['-1,0', '0,0']);
+      expect(result.animations).toHaveLength(1);
     }
     const next = applySlide(state, 'a');
     expect(next.tiles.map((tile) => tile.id)).toEqual(['b']);
@@ -204,6 +205,102 @@ describe('levels', () => {
 
   it('solves bundled level 1', () => {
     expect(solveLevel(level1).solvable).toBe(true);
+  });
+});
+
+describe('one-way walls', () => {
+  const level: LevelDef = {
+    id: 201,
+    name: 'One way',
+    cells: [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+      { q: 2, r: 0 },
+      { q: 1, r: -1 },
+    ],
+    oneWayWalls: [{ q: 1, r: 0, dir: 0 }],
+    tiles: [
+      { id: 'a', q: 0, r: 0, dir: 1 },
+      { id: 'b', q: 2, r: 0, dir: 3 },
+    ],
+  };
+
+  it('blocks entry from the barred direction', () => {
+    const state = createGameState(level);
+    const eastAttempt: LevelDef = {
+      ...level,
+      tiles: [
+        { id: 'a', q: 0, r: 0, dir: 0 },
+        { id: 'b', q: 2, r: 0, dir: 3 },
+      ],
+    };
+    expect(canSlideTile(createGameState(eastAttempt), 'a').ok).toBe(false);
+    expect(canSlideTile(state, 'b').ok).toBe(true);
+  });
+
+  it('solves after using the open direction', () => {
+    let state = createGameState(level);
+    state = applySlide(state, 'b');
+    expect(canSlideTile(state, 'a').ok).toBe(true);
+    expect(solveLevel(level).solvable).toBe(true);
+  });
+});
+
+describe('rotators', () => {
+  const level: LevelDef = {
+    id: 202,
+    name: 'Turn',
+    cells: [
+      { q: -1, r: 0 },
+      { q: 0, r: 0 },
+      { q: 1, r: -1 },
+      { q: 2, r: -1 },
+    ],
+    rotators: [{ q: 0, r: 0, turn: 1 }],
+    tiles: [{ id: 'a', q: -1, r: 0, dir: 0 }],
+  };
+
+  it('redirects a slide through a rotator', () => {
+    const result = canSlideTile(createGameState(level), 'a');
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.path.map(coordKey)).toEqual(['-1,0', '0,0', '1,-1', '2,-2']);
+    }
+  });
+});
+
+describe('linked pairs', () => {
+  const level: LevelDef = {
+    id: 203,
+    name: 'Linked',
+    cells: [
+      { q: 0, r: 0 },
+      { q: 1, r: 0 },
+      { q: 2, r: 0 },
+      { q: 3, r: 0 },
+    ],
+    tiles: [
+      { id: 'a', q: 0, r: 0, dir: 0, linked: 'b' },
+      { id: 'b', q: 1, r: 0, dir: 0, linked: 'a' },
+      { id: 'c', q: 2, r: 0, dir: 0 },
+    ],
+  };
+
+  it('slides both linked tiles together', () => {
+    const state = createGameState(level);
+    expect(canSlideTile(state, 'a').ok).toBe(false);
+    expect(canSlideTile(state, 'c').ok).toBe(true);
+
+    const after = applySlide(state, 'c');
+    const pair = canSlideTile(after, 'a');
+    expect(pair.ok).toBe(true);
+    if (pair.ok) {
+      expect(pair.animations).toHaveLength(2);
+    }
+  });
+
+  it('solves linked tutorial layout', () => {
+    expect(solveLevel(level).solvable).toBe(true);
   });
 });
 

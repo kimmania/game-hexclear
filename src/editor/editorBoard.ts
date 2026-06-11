@@ -8,6 +8,8 @@ import {
   axialToPixel,
   computeViewBox,
   createDirectionArrow,
+  createOneWayWallMarker,
+  createRotatorMarker,
   hexPolygonPoints,
 } from '../ui/hexLayout';
 
@@ -82,6 +84,38 @@ export function createEditorBoard(
       bg.appendChild(poly);
     }
 
+    for (const oneWay of draft.oneWayWalls) {
+      bg.appendChild(createOneWayWallMarker(oneWay.q, oneWay.r, oneWay.dir));
+    }
+
+    for (const rotator of draft.rotators) {
+      bg.appendChild(createRotatorMarker(rotator.q, rotator.r));
+    }
+
+    const linkLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    linkLayer.setAttribute('class', 'hex-links');
+    svg.appendChild(linkLayer);
+
+    const drawnLinks = new Set<string>();
+    for (const tile of draft.tiles) {
+      if (!tile.linked) continue;
+      const linkKey = [tile.id, tile.linked].sort().join(':');
+      if (drawnLinks.has(linkKey)) continue;
+      const partner = draft.tiles.find((entry) => entry.id === tile.linked);
+      if (!partner) continue;
+      drawnLinks.add(linkKey);
+
+      const from = axialToPixel(tile.q, tile.r);
+      const to = axialToPixel(partner.q, partner.r);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', String(from.x));
+      line.setAttribute('y1', String(from.y));
+      line.setAttribute('x2', String(to.x));
+      line.setAttribute('y2', String(to.y));
+      line.setAttribute('class', 'hex-link-line');
+      linkLayer.appendChild(line);
+    }
+
     const tilesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     tilesLayer.setAttribute('class', 'hex-tiles');
     svg.appendChild(tilesLayer);
@@ -90,6 +124,9 @@ export function createEditorBoard(
       const { x, y } = axialToPixel(tile.q, tile.r);
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       group.setAttribute('class', 'hex-tile');
+      if (tile.linked) {
+        group.classList.add('hex-tile-linked');
+      }
 
       const colors = tileStyleForDirection(tile.dir);
       const body = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

@@ -13,11 +13,14 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 4. If another tile or wall is in the way, the move is **blocked**.
 5. **Holes** in the board swallow any tile that slides over them.
 6. **Frozen** tiles cannot slide while another tile sits next to them — clear neighbors first, then slide through the gap they leave.
-7. **Clear every hex** to win the level. Beat **par** for a perfect score.
+7. **One-way walls** (from level 31) block entry from a single direction — the orange chevron shows which slides are stopped.
+8. **Rotators** (from level 32) spin a tile's direction when it passes through the marked cell.
+9. **Linked pairs** (from level 33) move together — tap either tile to slide both in that tile's direction.
+10. **Clear every hex** to win the level. Beat **par** for a perfect score.
 
 ## Features
 
-- 30 puzzle levels with progressive difficulty (frozen tiles from level 6, walls from level 11, holes from level 18)
+- 33 puzzle levels with progressive difficulty (frozen from level 6, walls from 11, holes from 18, one-way / rotator / linked from 31–33)
 - Move counter and par targets on advanced levels; best scores saved locally
 - Level picker, unlock progress, and in-progress save per level
 - Settings: sound effects and reduce motion
@@ -56,6 +59,9 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 | **Wall** | Toggle a blocking wall on a cell |
 | **Hole** | Toggle a pit — tiles fall in when slid over |
 | **Frozen** | Toggle frozen lock on a tile |
+| **One-way** | Toggle a directional barrier; tap to rotate, then remove |
+| **Rotator** | Toggle a turnstile cell (clockwise turn) |
+| **Link** | Tap two tiles to link them as a sticky pair |
 | **Erase** | Remove a cell and its contents |
 
 Set **Frozen** when placing tiles. Optional **Par** is the target move count. Level JSON stores direction only — colors are derived at render time.
@@ -81,6 +87,8 @@ npx lighthouse http://localhost:4173/game-hexclear/ \
 ## Levels
 
 Levels live in `public/levels/*.json`. Add an id to `public/levels/index.json` to ship a new puzzle.
+
+See `docs/MECHANICS.md` for feature reference and ideas for future level packs.
 
 ## GitHub Pages
 

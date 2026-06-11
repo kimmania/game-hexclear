@@ -34,6 +34,9 @@ const TOOL_HINTS: Record<EditorTool, string> = {
   wall: 'Tap a cell to toggle a wall (blocks slides).',
   hole: 'Tap a cell to toggle a pit (tiles fall in and are removed).',
   frozen: 'Tap a tile to toggle frozen (locked while neighbors remain).',
+  oneway: 'Tap a cell to add a one-way barrier; tap again to rotate, then remove.',
+  rotator: 'Tap a cell to toggle a rotator (turns sliding tiles clockwise).',
+  link: 'Tap one tile, then a second to link them as a sticky pair. Tap same tile to cancel.',
   erase: 'Tap a cell to remove it and anything on it.',
 };
 
@@ -66,6 +69,7 @@ export async function bootstrapEditor(): Promise<void> {
   const draft = await loadInitialDraft();
   let tool: EditorTool = 'cell';
   let tileFrozen = false;
+  let linkPendingId: string | null = null;
 
   app.innerHTML = '';
   app.className = 'editor-app';
@@ -90,6 +94,9 @@ export async function bootstrapEditor(): Promise<void> {
     { id: 'wall', label: 'Wall' },
     { id: 'hole', label: 'Hole' },
     { id: 'frozen', label: 'Frozen' },
+    { id: 'oneway', label: 'One-way' },
+    { id: 'rotator', label: 'Rotator' },
+    { id: 'link', label: 'Link' },
     { id: 'erase', label: 'Erase' },
   ];
 
@@ -126,6 +133,9 @@ export async function bootstrapEditor(): Promise<void> {
     draft.tiles = [];
     draft.walls = [];
     draft.holes = [];
+    draft.oneWayWalls = [];
+    draft.rotators = [];
+    linkPendingId = null;
     render();
   });
 
@@ -363,18 +373,28 @@ export async function bootstrapEditor(): Promise<void> {
   app.append(header, toolbar, optionsBar, generatePanel, hint, boardHost, exportPanel);
 
   const board = createEditorBoard(boardInner, (coord) => {
-    applyTool(draft, tool, coord, {
-      frozen: tileFrozen,
-    });
+    linkPendingId = applyTool(
+      draft,
+      tool,
+      coord,
+      { frozen: tileFrozen },
+      linkPendingId,
+    );
     render();
   });
 
   function selectTool(next: EditorTool): void {
     tool = next;
+    if (next !== 'link') {
+      linkPendingId = null;
+    }
     for (const [id, btn] of toolButtons) {
       btn.classList.toggle('editor-tool-active', id === tool);
     }
-    hint.textContent = TOOL_HINTS[tool];
+    hint.textContent =
+      tool === 'link' && linkPendingId
+        ? `${TOOL_HINTS.link} Selected ${linkPendingId} — tap partner.`
+        : TOOL_HINTS[tool];
     frozenCheck.disabled = tool !== 'tile';
     render();
   }

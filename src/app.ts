@@ -168,6 +168,8 @@ export class HexClearApp {
           cells: session.cells,
           walls: session.walls,
           holes: session.holes ?? this.levelDef.holes ?? [],
+          oneWayWalls: session.oneWayWalls ?? this.levelDef.oneWayWalls ?? [],
+          rotators: session.rotators ?? this.levelDef.rotators ?? [],
           tiles: session.tiles,
           moveCount: session.moveCount ?? 0,
           ...(session.par !== undefined
@@ -323,7 +325,7 @@ export class HexClearApp {
     setHintEnabled(false);
     setUndoEnabled(false);
 
-    await this.board.animateSlide(this.state, tileId, result.path);
+    await this.board.animateSlides(this.state, result.animations);
     this.state = applySlide(this.state, tileId);
     this.renderBoard();
     this.persistSession();

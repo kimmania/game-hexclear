@@ -21,6 +21,23 @@ export type TileDef = {
   dir: HexDirection;
   /** Cannot slide while a tile occupies an adjacent hex. */
   frozen?: boolean;
+  /** Partner tile id — both move together when either is tapped. */
+  linked?: string;
+};
+
+/** Blocks entering this cell when sliding in the given direction. */
+export type OneWayWallDef = {
+  q: number;
+  r: number;
+  dir: HexDirection;
+};
+
+/** Rotates a sliding tile's direction when it passes through this cell. */
+export type RotatorDef = {
+  q: number;
+  r: number;
+  /** Clockwise steps (default 1). Use -1 for counter-clockwise. */
+  turn?: 1 | -1 | 2;
 };
 
 export type LevelDef = {
@@ -30,6 +47,8 @@ export type LevelDef = {
   tiles: TileDef[];
   walls?: HexCoord[];
   holes?: HexCoord[];
+  oneWayWalls?: OneWayWallDef[];
+  rotators?: RotatorDef[];
   /** Target move count for an optimal clear. */
   par?: number;
 };
@@ -40,6 +59,7 @@ export type TileState = {
   r: number;
   dir: HexDirection;
   frozen?: boolean;
+  linked?: string;
 };
 
 export type GameStatus = 'playing' | 'won';
@@ -51,6 +71,8 @@ export type GameState = {
   cells: HexCoord[];
   walls: HexCoord[];
   holes: HexCoord[];
+  oneWayWalls: OneWayWallDef[];
+  rotators: RotatorDef[];
   tiles: TileState[];
   moveCount: number;
   par?: number;
@@ -58,8 +80,13 @@ export type GameState = {
 
 export type SlideBlockReason = 'blocked' | 'missing' | 'finished' | 'frozen';
 
+export type SlideAnimation = {
+  tileId: TileId;
+  path: HexCoord[];
+};
+
 export type SlideResult =
-  | { ok: true; path: HexCoord[] }
+  | { ok: true; path: HexCoord[]; animations: SlideAnimation[] }
   | { ok: false; reason: SlideBlockReason };
 
 export type TileId = string;

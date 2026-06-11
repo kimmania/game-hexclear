@@ -37,7 +37,7 @@ export function saveProgress(progress: SavedProgress): void {
 
 export type SessionSnapshot = Pick<
   GameState,
-  'status' | 'cells' | 'walls' | 'holes' | 'tiles' | 'moveCount' | 'par'
+  'status' | 'cells' | 'walls' | 'holes' | 'oneWayWalls' | 'rotators' | 'tiles' | 'moveCount' | 'par'
 >;
 
 export function saveSession(levelId: number, state: GameState): void {
@@ -49,6 +49,8 @@ export function saveSession(levelId: number, state: GameState): void {
       cells: state.cells,
       walls: state.walls,
       holes: state.holes,
+      oneWayWalls: state.oneWayWalls,
+      rotators: state.rotators,
       tiles: state.tiles,
       moveCount: state.moveCount,
       ...(state.par !== undefined ? { par: state.par } : {}),

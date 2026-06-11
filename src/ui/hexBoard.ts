@@ -6,13 +6,15 @@ import {
   tileStyleForDirection,
   type ColorblindMode,
 } from '../core/tileColors';
-import type { GameState, HexCoord, HexDirection, TileId, TileState } from '../core/types';
+import type { GameState, HexCoord, HexDirection, SlideAnimation, TileId, TileState } from '../core/types';
 import { sortTileIdsForFocus } from '../game/keyboard';
 import {
   HEX_RADIUS,
   axialToPixel,
   computeViewBox,
   createDirectionArrow,
+  createOneWayWallMarker,
+  createRotatorMarker,
   hexPolygonPoints,
 } from './hexLayout';
 
@@ -67,7 +69,7 @@ function appendDirectionLabel(
 export type HexBoard = {
   svg: SVGSVGElement;
   render: (state: GameState, options?: BoardRenderOptions) => void;
-  animateSlide: (state: GameState, tileId: TileId, path: HexCoord[]) => Promise<void>;
+  animateSlides: (state: GameState, animations: SlideAnimation[]) => Promise<void>;
   flashBlocked: (tileId: TileId) => void;
   highlightTile: (tileId: TileId | null) => void;
   focusTile: (tileId: TileId | null) => void;
@@ -108,6 +110,9 @@ export function createHexBoard(
         : slideable
           ? 'frozen, thawed and can slide'
           : 'frozen, thawed but blocked';
+    }
+    if (tile.linked) {
+      status += ', linked pair';
     }
     return `Hex tile ${tile.id}, points ${direction}, ${status}`;
   }
@@ -250,6 +255,38 @@ export function createHexBoard(
       bg.appendChild(poly);
     }
 
+    for (const oneWay of state.oneWayWalls) {
+      bg.appendChild(createOneWayWallMarker(oneWay.q, oneWay.r, oneWay.dir));
+    }
+
+    for (const rotator of state.rotators) {
+      bg.appendChild(createRotatorMarker(rotator.q, rotator.r));
+    }
+
+    const linkLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    linkLayer.setAttribute('class', 'hex-links');
+    svg.appendChild(linkLayer);
+
+    const drawnLinks = new Set<string>();
+    for (const tile of state.tiles) {
+      if (!tile.linked) continue;
+      const linkKey = [tile.id, tile.linked].sort().join(':');
+      if (drawnLinks.has(linkKey)) continue;
+      const partner = state.tiles.find((entry) => entry.id === tile.linked);
+      if (!partner) continue;
+      drawnLinks.add(linkKey);
+
+      const from = axialToPixel(tile.q, tile.r);
+      const to = axialToPixel(partner.q, partner.r);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', String(from.x));
+      line.setAttribute('y1', String(from.y));
+      line.setAttribute('x2', String(to.x));
+      line.setAttribute('y2', String(to.y));
+      line.setAttribute('class', 'hex-link-line');
+      linkLayer.appendChild(line);
+    }
+
     const tilesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     tilesLayer.setAttribute('class', 'hex-tiles');
     svg.appendChild(tilesLayer);
@@ -279,6 +316,9 @@ export function createHexBoard(
       group.appendChild(body);
 
       group.appendChild(createDirectionArrow(tile.q, tile.r, tile.dir));
+      if (tile.linked && state.tiles.some((entry) => entry.id === tile.linked)) {
+        group.classList.add('hex-tile-linked');
+      }
       appendTileMarkers(group, x, y, tile, state);
       if (showDirectionLabels(colorblindMode)) {
         appendDirectionLabel(group, x, y, tile.dir);
@@ -316,22 +356,18 @@ export function createHexBoard(
     window.setTimeout(() => tile?.classList.remove('hex-tile-shake'), 400);
   }
 
-  function animateSlide(state: GameState, tileId: TileId, path: HexCoord[]): Promise<void> {
+  function animateOneSlide(state: GameState, tileId: TileId, path: HexCoord[]): Promise<void> {
     if (document.documentElement.classList.contains('reduce-motion') || path.length < 2) {
       return Promise.resolve();
     }
 
-    animating = true;
-
     const tileEl = svg.querySelector(`[data-tile-id="${tileId}"]`) as SVGGElement | null;
     if (!tileEl || path.length < 2) {
-      animating = false;
       return Promise.resolve();
     }
 
     const tile = state.tiles.find((entry) => entry.id === tileId);
     if (!tile) {
-      animating = false;
       return Promise.resolve();
     }
 
@@ -343,10 +379,6 @@ export function createHexBoard(
         step += 1;
         if (step >= path.length) {
           tileEl.removeAttribute('transform');
-          animating = false;
-          if (latestState) {
-            render(latestState, latestRenderOptions);
-          }
           resolve();
           return;
         }
@@ -361,10 +393,28 @@ export function createHexBoard(
     });
   }
 
+  function animateSlides(state: GameState, animations: SlideAnimation[]): Promise<void> {
+    if (document.documentElement.classList.contains('reduce-motion')) {
+      return Promise.resolve();
+    }
+
+    animating = true;
+    return Promise.all(animations.map((entry) => animateOneSlide(state, entry.tileId, entry.path)))
+      .then(() => {
+        animating = false;
+        if (latestState) {
+          render(latestState, latestRenderOptions);
+        }
+      })
+      .catch(() => {
+        animating = false;
+      });
+  }
+
   return {
     svg,
     render,
-    animateSlide,
+    animateSlides,
     flashBlocked,
     highlightTile,
     focusTile,

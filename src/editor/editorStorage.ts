@@ -33,6 +33,9 @@ export function loadEditorDraft(): EditorDraft | null {
       tiles: parsed.tiles.map((tile) => ({ ...tile })),
       walls: parsed.walls.map((wall) => ({ ...wall })),
       holes: parsed.holes.map((hole) => ({ ...hole })),
+      oneWayWalls: (parsed.oneWayWalls ?? []).map((wall) => ({ ...wall })),
+      rotators: (parsed.rotators ?? []).map((rotator) => ({ ...rotator })),
+      ...(parsed.par !== undefined ? { par: parsed.par } : {}),
     };
   } catch {
     return null;

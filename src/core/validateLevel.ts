@@ -14,6 +14,36 @@ function isCoord(value: unknown): boolean {
   );
 }
 
+function isOneWayWall(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.q === 'number' &&
+    Number.isInteger(value.q) &&
+    typeof value.r === 'number' &&
+    Number.isInteger(value.r) &&
+    typeof value.dir === 'number' &&
+    Number.isInteger(value.dir) &&
+    value.dir >= 0 &&
+    value.dir <= 5
+  );
+}
+
+function isRotator(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.q !== 'number' ||
+    !Number.isInteger(value.q) ||
+    typeof value.r !== 'number' ||
+    !Number.isInteger(value.r)
+  ) {
+    return false;
+  }
+  if (value.turn !== undefined && value.turn !== 1 && value.turn !== -1 && value.turn !== 2) {
+    return false;
+  }
+  return true;
+}
+
 function isTile(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (
@@ -30,6 +60,9 @@ function isTile(value: unknown): boolean {
     return false;
   }
   if (value.frozen !== undefined && typeof value.frozen !== 'boolean') {
+    return false;
+  }
+  if (value.linked !== undefined && typeof value.linked !== 'string') {
     return false;
   }
   return true;
@@ -83,6 +116,17 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
     }
   }
 
+  for (const tile of level.tiles) {
+    if (!tile.linked) continue;
+    if (!tileIds.has(tile.linked)) {
+      throw new Error(`Tile ${tile.id} links to missing tile ${tile.linked}`);
+    }
+    const partner = level.tiles.find((entry) => entry.id === tile.linked);
+    if (!partner?.linked || partner.linked !== tile.id) {
+      throw new Error(`Tile ${tile.id} must have a mutual link with ${tile.linked}`);
+    }
+  }
+
   for (const hole of level.holes ?? []) {
     if (!isCoord(hole)) {
       throw new Error('Invalid hole coordinate');
@@ -107,5 +151,46 @@ export function validateLevel(level: LevelDef, expectedId?: number): void {
     if (level.tiles.some((tile) => tile.q === wall.q && tile.r === wall.r)) {
       throw new Error(`Wall overlaps tile at ${key}`);
     }
+  }
+
+  for (const oneWay of level.oneWayWalls ?? []) {
+    if (!isOneWayWall(oneWay)) {
+      throw new Error('Invalid one-way wall definition');
+    }
+    const key = `${oneWay.q},${oneWay.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`One-way wall at ${key} is outside the board cells`);
+    }
+    if (level.walls?.some((wall) => wall.q === oneWay.q && wall.r === oneWay.r)) {
+      throw new Error(`One-way wall overlaps full wall at ${key}`);
+    }
+  }
+
+  const oneWayKeys = new Set<string>();
+  for (const oneWay of level.oneWayWalls ?? []) {
+    const key = `${oneWay.q},${oneWay.r}:${oneWay.dir}`;
+    if (oneWayKeys.has(key)) {
+      throw new Error(`Duplicate one-way wall at ${key}`);
+    }
+    oneWayKeys.add(key);
+  }
+
+  for (const rotator of level.rotators ?? []) {
+    if (!isRotator(rotator)) {
+      throw new Error('Invalid rotator definition');
+    }
+    const key = `${rotator.q},${rotator.r}`;
+    if (!cellKeys.has(key)) {
+      throw new Error(`Rotator at ${key} is outside the board cells`);
+    }
+  }
+
+  const rotatorKeys = new Set<string>();
+  for (const rotator of level.rotators ?? []) {
+    const key = `${rotator.q},${rotator.r}`;
+    if (rotatorKeys.has(key)) {
+      throw new Error(`Duplicate rotator at ${key}`);
+    }
+    rotatorKeys.add(key);
   }
 }
