@@ -118,6 +118,7 @@ describe('user data reset', () => {
       '{"id":1,"name":"Draft","cells":[],"tiles":[],"walls":[],"holes":[]}',
     );
     store.set('hexclear-install-hint', 'dismissed');
+    store.set('hexclear-tutorial-dismissed', 'dismissed');
 
     clearAllUserData();
 
@@ -126,5 +127,6 @@ describe('user data reset', () => {
     expect(store.get('hexclear-settings')).toBeUndefined();
     expect(store.get('hexclear-editor-draft')).toBeUndefined();
     expect(store.get('hexclear-install-hint')).toBeUndefined();
+    expect(store.get('hexclear-tutorial-dismissed')).toBeUndefined();
   });
 });

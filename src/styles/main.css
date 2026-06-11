@@ -471,6 +471,47 @@ body {
   width: 100%;
 }
 
+.tutorial-panel {
+  max-width: 360px;
+}
+
+.tutorial-kicker {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tutorial-title {
+  margin-bottom: 10px;
+}
+
+.tutorial-body {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.tutorial-progress {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tutorial-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tutorial-skip {
+  width: 100%;
+}
+
 .settings-row {
   display: flex;
   align-items: center;

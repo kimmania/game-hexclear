@@ -17,6 +17,7 @@ import { configureAudio, playSound, primeAudio } from './game/audio';
 import { pulseHaptic } from './game/haptics';
 import { createKeyboardControls } from './game/keyboard';
 import { loadSettings, saveSettings, type GameSettings } from './game/settings';
+import { shouldShowLevel1Tutorial } from './game/tutorial';
 import { clearAllUserData } from './game/userData';
 import {
   clearSession,
@@ -52,6 +53,7 @@ import {
 import { createHexBoard } from './ui/hexBoard';
 import { closeLevelPicker, openLevelPicker } from './ui/levelPicker';
 import { closeSettingsPanel, openSettingsPanel } from './ui/settingsPanel';
+import { isTutorialOpen, openTutorialOverlay } from './ui/tutorialOverlay';
 
 export class HexClearApp {
   private state: GameState | null = null;
@@ -79,7 +81,8 @@ export class HexClearApp {
     onRestart: () => this.handleRestart(),
     isModalOpen: () =>
       document.getElementById('settings-panel') !== null ||
-      document.getElementById('level-picker') !== null,
+      document.getElementById('level-picker') !== null ||
+      isTutorialOpen(),
     isBusy: () => this.busy || this.loading,
     canUndo: () =>
       this.settings.undo &&
@@ -134,6 +137,13 @@ export class HexClearApp {
     applyBoardZoom(this.state.cells.length, this.settings.boardZoom);
   }
 
+  private maybeShowTutorial(levelId: number): void {
+    if (!shouldShowLevel1Tutorial(levelId, this.isImportedLevel())) return;
+    openTutorialOverlay(() => {
+      setHint('Tap the rightmost hex first — its path is clear.');
+    });
+  }
+
   private isImportedLevel(): boolean {
     return this.customLevelDef !== null;
   }
@@ -176,6 +186,7 @@ export class HexClearApp {
       this.renderBoard();
       this.syncChrome();
       setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
+      this.maybeShowTutorial(levelId);
     } finally {
       this.loading = false;
     }
