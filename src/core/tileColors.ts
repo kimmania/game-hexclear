@@ -19,8 +19,29 @@ export const DIRECTION_LABELS: Record<HexDirection, string> = {
   5: 'Southeast',
 };
 
-/** UI palette — edit here to restyle direction colors. */
+export const DIRECTION_SHORT: Record<HexDirection, string> = {
+  0: 'E',
+  1: 'NE',
+  2: 'NW',
+  3: 'W',
+  4: 'SW',
+  5: 'SE',
+};
+
+export type ColorblindMode = 'off' | 'soft' | 'labels';
+
+/** Default vivid palette — easy to read on the board. */
 export const TILE_PALETTE: Record<TileColor, { fill: string; edge: string }> = {
+  coral: { fill: '#ffb000', edge: '#cc8800' },
+  sky: { fill: '#0077ff', edge: '#0055bb' },
+  mint: { fill: '#00aa66', edge: '#007744' },
+  gold: { fill: '#ffffff', edge: '#cccccc' },
+  lavender: { fill: '#cc44ff', edge: '#9900cc' },
+  rose: { fill: '#ff3366', edge: '#cc0033' },
+};
+
+/** Softer pastel palette (optional in settings). */
+export const SOFT_PALETTE: Record<TileColor, { fill: string; edge: string }> = {
   coral: { fill: '#ff7b6b', edge: '#e05a4a' },
   sky: { fill: '#5eb8ff', edge: '#3d9ae8' },
   mint: { fill: '#5fd4a4', edge: '#3fb888' },
@@ -33,6 +54,26 @@ export function colorForDirection(dir: HexDirection): TileColor {
   return COLOR_BY_DIRECTION[dir];
 }
 
-export function tileStyleForDirection(dir: HexDirection): { fill: string; edge: string } {
-  return TILE_PALETTE[colorForDirection(dir)];
+export function paletteForMode(mode: ColorblindMode): Record<TileColor, { fill: string; edge: string }> {
+  return mode === 'soft' ? SOFT_PALETTE : TILE_PALETTE;
+}
+
+export function tileStyleForDirection(
+  dir: HexDirection,
+  mode: ColorblindMode = 'off',
+): { fill: string; edge: string } {
+  return paletteForMode(mode)[colorForDirection(dir)];
+}
+
+export function showDirectionLabels(mode: ColorblindMode): boolean {
+  return mode === 'labels';
+}
+
+/** @deprecated Use ColorblindMode */
+export type LegacyColorblindMode = ColorblindMode | 'contrast';
+
+export function normalizeColorblindMode(value: unknown): ColorblindMode {
+  if (value === 'soft' || value === 'labels') return value;
+  if (value === 'contrast') return 'soft';
+  return 'off';
 }

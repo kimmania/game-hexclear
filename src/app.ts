@@ -14,12 +14,15 @@ import { cloneForUndo, findHintMove } from './core/solver';
 import type { GameState, LevelDef, TileId } from './core/types';
 import { configureAudio, playSound, primeAudio } from './game/audio';
 import { pulseHaptic } from './game/haptics';
+import { createKeyboardControls } from './game/keyboard';
 import { loadSettings, saveSettings, type GameSettings } from './game/settings';
 import { clearAllUserData } from './game/userData';
 import {
   clearSession,
+  computeCompletionSummary,
   findInProgressLevelIds,
   findResumeLevel,
+  formatCompletionSummary,
   getCompletedLevelIds,
   getBestMoves,
   isNewBestMove,
@@ -30,6 +33,7 @@ import {
   saveSession,
   unlockNextLevel,
 } from './game/storage';
+import { applyBoardZoom, applySettingsClasses } from './ui/accessibility';
 import {
   bindControls,
   setContinueBanner,
@@ -46,7 +50,7 @@ import {
 } from './ui/controls';
 import { createHexBoard } from './ui/hexBoard';
 import { closeLevelPicker, openLevelPicker } from './ui/levelPicker';
-import { applyMotionClass, closeSettingsPanel, openSettingsPanel } from './ui/settingsPanel';
+import { closeSettingsPanel, openSettingsPanel } from './ui/settingsPanel';
 
 export class HexClearApp {
   private state: GameState | null = null;
@@ -65,11 +69,29 @@ export class HexClearApp {
     document.getElementById('board-host')!,
     (tileId) => void this.handleTileTap(tileId),
   );
+  private keyboardControls = createKeyboardControls(this.board, {
+    onSlideFocused: () => this.board.slideFocusedTile(),
+    onHint: () => this.handleHint(),
+    onUndo: () => this.handleUndo(),
+    onRestart: () => this.handleRestart(),
+    isModalOpen: () =>
+      document.getElementById('settings-panel') !== null ||
+      document.getElementById('level-picker') !== null,
+    isBusy: () => this.busy || this.loading,
+    canUndo: () =>
+      this.settings.undo &&
+      this.undoSnapshot !== null &&
+      !this.busy &&
+      !this.loading &&
+      this.state !== null &&
+      !isWin(this.state),
+  });
 
   async init(): Promise<void> {
     configureAudio(this.settings);
-    applyMotionClass(this.settings.reducedMotion);
+    applySettingsClasses(this.settings);
     setUndoVisible(this.settings.undo);
+    this.keyboardControls.bind();
 
     bindControls({
       onRestart: () => this.handleRestart(),
@@ -101,6 +123,12 @@ export class HexClearApp {
 
   private getCurrentLevelId(): number {
     return this.state?.levelId ?? this.progress.currentLevel;
+  }
+
+  private renderBoard(): void {
+    if (!this.state) return;
+    this.board.render(this.state, { colorblindMode: this.settings.colorblindMode });
+    applyBoardZoom(this.state.cells.length, this.settings.boardZoom);
   }
 
   private async loadLevel(levelId: number): Promise<void> {
@@ -137,9 +165,9 @@ export class HexClearApp {
       this.progress = { ...this.progress, currentLevel: levelId };
       saveProgress(this.progress);
 
-      this.board.render(this.state);
+      this.renderBoard();
       this.syncChrome();
-      setHint('Tap a hex to slide it off the board.');
+      setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
     } finally {
       this.loading = false;
     }
@@ -236,7 +264,7 @@ export class HexClearApp {
 
     await this.board.animateSlide(this.state, tileId, result.path);
     this.state = applySlide(this.state, tileId);
-    this.board.render(this.state);
+    this.renderBoard();
     this.persistSession();
 
     if (isWin(this.state)) {
@@ -279,6 +307,7 @@ export class HexClearApp {
     }
 
     this.board.highlightTile(tileId);
+    this.board.focusTile(tileId);
     setHint('Highlighted hex can slide.');
     playSound('tap');
     pulseHaptic(3);
@@ -299,7 +328,7 @@ export class HexClearApp {
     this.state = cloneForUndo(this.undoSnapshot);
     this.undoSnapshot = null;
     this.board.highlightTile(null);
-    this.board.render(this.state);
+    this.renderBoard();
     this.persistSession();
     this.syncChrome();
     setHint('Undid last move.');
@@ -316,9 +345,9 @@ export class HexClearApp {
     this.previousBestOnWin = undefined;
     this.board.highlightTile(null);
     showWinPanel(false);
-    this.board.render(this.state);
+    this.renderBoard();
     this.syncChrome();
-    setHint('Tap a hex to slide it off the board.');
+    setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
   }
 
   private handleRestart(): void {
@@ -328,9 +357,9 @@ export class HexClearApp {
     this.undoSnapshot = null;
     this.previousBestOnWin = undefined;
     this.board.highlightTile(null);
-    this.board.render(this.state);
+    this.renderBoard();
     this.syncChrome();
-    setHint('Tap a hex to slide it off the board.');
+    setHint('Tap a hex to slide. Arrows move focus, Enter slides, H for hint.');
     showWinPanel(false);
   }
 
@@ -353,6 +382,9 @@ export class HexClearApp {
       ),
       progress: this.progress,
       levelPars: this.levelPars,
+      completionSummary: formatCompletionSummary(
+        computeCompletionSummary(this.progress, this.levelIds, this.levelPars),
+      ),
       onSelect: (levelId) => void this.goToLevel(levelId),
       onClose: () => closeLevelPicker(),
     });
@@ -385,7 +417,7 @@ export class HexClearApp {
     this.previousBestOnWin = undefined;
     this.undoSnapshot = null;
     configureAudio(this.settings);
-    applyMotionClass(this.settings.reducedMotion);
+    applySettingsClasses(this.settings);
     setUndoVisible(this.settings.undo);
     setContinueBanner(null);
     showWinPanel(false);
@@ -400,8 +432,9 @@ export class HexClearApp {
     this.settings = settings;
     saveSettings(settings);
     configureAudio(settings);
-    applyMotionClass(settings.reducedMotion);
+    applySettingsClasses(settings);
     setUndoVisible(settings.undo);
+    this.renderBoard();
     this.syncChrome();
   }
 }

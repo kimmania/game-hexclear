@@ -150,9 +150,26 @@ body {
   min-height: 280px;
 }
 
+.game-area-dense {
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: auto;
+  padding: 8px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
 .board-host {
   width: 100%;
   max-width: 400px;
+  margin: 0 auto;
+}
+
+.board-host-dense {
+  width: max(100%, 420px);
+  max-width: none;
+  transform: scale(1.32);
+  transform-origin: top center;
+  padding-bottom: 24px;
 }
 
 .hex-board {
@@ -185,7 +202,8 @@ body {
   transition: filter 0.15s ease;
 }
 
-.hex-tile:focus-visible {
+.hex-tile:focus-visible,
+.hex-tile-focused {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -202,7 +220,7 @@ body {
   fill: #ffc857;
 }
 
-.hex-tile-locked {
+.hex-tile-frozen-locked {
   opacity: 0.88;
 }
 
@@ -211,6 +229,34 @@ body {
   stroke: rgba(180, 220, 255, 0.85);
   stroke-width: 2;
   pointer-events: none;
+}
+
+.hex-tile-ready-ring {
+  fill: none;
+  stroke: #5fd4ff;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+  animation: hex-thaw-pulse 1.6s ease-in-out infinite;
+}
+
+.hex-tile-frozen-ready {
+  filter: drop-shadow(0 0 4px rgba(95, 212, 255, 0.55));
+}
+
+@keyframes hex-thaw-pulse {
+  0%,
+  100% {
+    stroke-opacity: 0.55;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.reduce-motion .hex-tile-ready-ring {
+  animation: none;
+  stroke-opacity: 1;
 }
 
 .hex-chain-badge {
@@ -325,6 +371,31 @@ body {
   font-size: 1.1rem;
 }
 
+.hex-tile-dir-label {
+  fill: #102033;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: system-ui, sans-serif;
+  paint-order: stroke fill;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2px;
+}
+
+[data-colorblind='off'] .hex-tile-arrow path:last-child,
+[data-colorblind='labels'] .hex-tile-arrow path:last-child {
+  fill: #102033;
+}
+
+.level-summary {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: rgba(94, 184, 255, 0.12);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .level-legend {
   margin: 0 0 12px;
   font-size: 0.8rem;
@@ -414,6 +485,28 @@ body {
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
+}
+
+.settings-row-select {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  cursor: default;
+}
+
+.settings-row-label {
+  font-size: 0.95rem;
+}
+
+.settings-select {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius);
+  background: var(--board);
+  color: var(--text);
+  font: inherit;
 }
 
 .settings-reset-hint {

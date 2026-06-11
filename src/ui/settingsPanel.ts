@@ -1,4 +1,5 @@
-import type { GameSettings } from '../game/settings';
+import type { ColorblindMode } from '../core/tileColors';
+import type { BoardZoomMode, GameSettings } from '../game/settings';
 
 export type SettingsPanelOptions = {
   settings: GameSettings;
@@ -47,6 +48,29 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     (checked) => options.onChange({ ...options.settings, undo: checked }),
   );
 
+  const colorblindRow = createSelectRow<ColorblindMode>(
+    'colorblind-mode',
+    'Colorblind mode',
+    options.settings.colorblindMode,
+    [
+      { value: 'off', label: 'Default colors' },
+      { value: 'soft', label: 'Softer colors' },
+      { value: 'labels', label: 'Direction labels' },
+    ],
+    (value) => options.onChange({ ...options.settings, colorblindMode: value }),
+  );
+
+  const zoomRow = createSelectRow<BoardZoomMode>(
+    'board-zoom',
+    'Dense board zoom',
+    options.settings.boardZoom,
+    [
+      { value: 'auto', label: 'Auto zoom large boards' },
+      { value: 'off', label: 'Off' },
+    ],
+    (value) => options.onChange({ ...options.settings, boardZoom: value }),
+  );
+
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
   resetBtn.className = 'btn settings-reset-btn';
@@ -67,7 +91,17 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     if (event.target === overlay) options.onClose();
   });
 
-  panel.append(title, soundRow, motionRow, undoRow, resetHint, resetBtn, closeBtn);
+  panel.append(
+    title,
+    soundRow,
+    motionRow,
+    undoRow,
+    colorblindRow,
+    zoomRow,
+    resetHint,
+    resetBtn,
+    closeBtn,
+  );
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   closeBtn.focus();
@@ -93,6 +127,37 @@ function createToggleRow(
   input.addEventListener('change', () => onChange(input.checked));
 
   row.append(span, input);
+  return row;
+}
+
+function createSelectRow<T extends string>(
+  id: string,
+  label: string,
+  value: T,
+  options: Array<{ value: T; label: string }>,
+  onChange: (value: T) => void,
+): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'settings-row settings-row-select';
+
+  const span = document.createElement('label');
+  span.className = 'settings-row-label';
+  span.htmlFor = id;
+  span.textContent = label;
+
+  const select = document.createElement('select');
+  select.id = id;
+  select.className = 'settings-select';
+  for (const option of options) {
+    const el = document.createElement('option');
+    el.value = option.value;
+    el.textContent = option.label;
+    select.appendChild(el);
+  }
+  select.value = value;
+  select.addEventListener('change', () => onChange(select.value as T));
+
+  row.append(span, select);
   return row;
 }
 

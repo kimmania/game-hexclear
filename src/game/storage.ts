@@ -94,6 +94,58 @@ export function formatLevelScore(bestMoves: number | undefined, par: number | un
   return `Best ${bestMoves}`;
 }
 
+export type CompletionSummary = {
+  totalLevels: number;
+  cleared: number;
+  parLevels: number;
+  atPar: number;
+  underPar: number;
+};
+
+export function computeCompletionSummary(
+  progress: SavedProgress,
+  levelIds: number[],
+  levelPars: Map<number, number | undefined>,
+): CompletionSummary {
+  const completed = getCompletedLevelIds(progress);
+  let atPar = 0;
+  let underPar = 0;
+  let parLevels = 0;
+
+  for (const id of levelIds) {
+    const par = levelPars.get(id);
+    if (par === undefined) continue;
+    parLevels += 1;
+    if (!completed.has(id)) continue;
+    const best = getBestMoves(progress, id);
+    if (best === undefined) continue;
+    if (best < par) underPar += 1;
+    else if (best <= par) atPar += 1;
+  }
+
+  return {
+    totalLevels: levelIds.length,
+    cleared: completed.size,
+    parLevels,
+    atPar,
+    underPar,
+  };
+}
+
+export function formatCompletionSummary(summary: CompletionSummary): string {
+  const parts = [`${summary.cleared}/${summary.totalLevels} cleared`];
+  if (summary.parLevels > 0) {
+    const parTotal = summary.atPar + summary.underPar;
+    if (parTotal > 0) {
+      parts.push(`${parTotal} at par`);
+    }
+    if (summary.underPar > 0) {
+      parts.push(`${summary.underPar} under par`);
+    }
+  }
+  return parts.join(' · ');
+}
+
 export function getCompletedLevelIds(progress: SavedProgress): Set<number> {
   if (progress.completedLevels?.length) {
     return new Set(progress.completedLevels);

@@ -1,6 +1,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
   formatLevelScore,
+  computeCompletionSummary,
+  formatCompletionSummary,
   isNewBestMove,
   metPar,
   PROGRESS_STORAGE_KEY,
@@ -61,6 +63,28 @@ describe('progress storage', () => {
     expect(formatLevelScore(6, 5)).toBe('6 · par 5');
     expect(formatLevelScore(6, undefined)).toBe('Best 6');
     expect(formatLevelScore(undefined, 5)).toBeNull();
+  });
+
+  it('summarizes completion progress', () => {
+    const progress: SavedProgress = {
+      highestUnlocked: 4,
+      currentLevel: 3,
+      completedLevels: [1, 2, 3],
+      bestMoves: { '1': 3, '2': 4, '3': 2 },
+    };
+    const levelIds = [1, 2, 3, 4];
+    const levelPars = new Map<number, number | undefined>([
+      [1, 3],
+      [2, 4],
+      [3, 4],
+      [4, 5],
+    ]);
+
+    const summary = computeCompletionSummary(progress, levelIds, levelPars);
+    expect(summary.cleared).toBe(3);
+    expect(summary.atPar).toBe(2);
+    expect(summary.underPar).toBe(1);
+    expect(formatCompletionSummary(summary)).toBe('3/4 cleared · 3 at par · 1 under par');
   });
 });
 

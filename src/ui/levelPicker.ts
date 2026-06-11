@@ -10,6 +10,7 @@ export type LevelPickerOptions = {
   inProgressLevelIds: Set<number>;
   progress: SavedProgress;
   levelPars: Map<number, number | undefined>;
+  completionSummary: string;
   onSelect: (levelId: number) => void;
   onClose: () => void;
 };
@@ -84,6 +85,10 @@ export function openLevelPicker(options: LevelPickerOptions): void {
   title.className = 'modal-title';
   title.textContent = 'Choose level';
 
+  const summary = document.createElement('p');
+  summary.className = 'level-summary';
+  summary.textContent = options.completionSummary;
+
   const legend = document.createElement('p');
   legend.className = 'level-legend';
   legend.textContent = '✓ cleared · ★ at par · • in progress · outline = current';
@@ -154,7 +159,7 @@ export function openLevelPicker(options: LevelPickerOptions): void {
     if (event.target === overlay) options.onClose();
   });
 
-  panel.append(title, legend, grid, closeBtn);
+  panel.append(title, summary, legend, grid, closeBtn);
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   closeBtn.focus();
