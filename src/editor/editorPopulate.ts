@@ -1,5 +1,4 @@
 import { AXIAL_DIRS, coordKey } from '../core/hex';
-import { colorForDirection } from '../core/tileColors';
 import type { HexCoord, HexDirection } from '../core/types';
 import type { EditorDraft } from './editorState';
 
@@ -117,7 +116,6 @@ export function populateDraft(
       q: cell.q,
       r: cell.r,
       dir,
-      color: colorForDirection(dir),
     };
   });
 

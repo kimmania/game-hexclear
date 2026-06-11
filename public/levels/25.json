@@ -59,57 +59,49 @@
       "id": "t1",
       "q": -1,
       "r": 0,
-      "dir": 3,
-      "color": "gold"
+      "dir": 3
     },
     {
       "id": "t2",
       "q": -1,
       "r": 1,
-      "dir": 4,
-      "color": "lavender"
+      "dir": 4
     },
     {
       "id": "t3",
       "q": 0,
       "r": 0,
-      "dir": 3,
-      "color": "gold"
+      "dir": 3
     },
     {
       "id": "t4",
       "q": 0,
       "r": 1,
-      "dir": 3,
-      "color": "gold"
+      "dir": 3
     },
     {
       "id": "t5",
       "q": 2,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t6",
       "q": 2,
       "r": 1,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t7",
       "q": 3,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t8",
       "q": 3,
       "r": 1,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     }
   ]
 }

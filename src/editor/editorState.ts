@@ -1,5 +1,4 @@
 import { coordKey } from '../core/hex';
-import { colorForDirection } from '../core/tileColors';
 import type { HexCoord, HexDirection, LevelDef, TileDef } from '../core/types';
 
 export type EditorTool = 'cell' | 'tile' | 'wall' | 'hole' | 'frozen' | 'erase';
@@ -23,7 +22,11 @@ export function draftFromLevel(level: LevelDef): EditorDraft {
     id: level.id,
     name: level.name,
     cells: level.cells.map((cell) => ({ ...cell })),
-    tiles: level.tiles.map((tile) => ({ ...tile })),
+    tiles: level.tiles.map(({ id, q, r, dir, frozen }) => {
+      const tile: TileDef = { id, q, r, dir };
+      if (frozen) tile.frozen = true;
+      return tile;
+    }),
     walls: (level.walls ?? []).map((wall) => ({ ...wall })),
     holes: (level.holes ?? []).map((hole) => ({ ...hole })),
     ...(level.par !== undefined ? { par: level.par } : {}),
@@ -46,7 +49,11 @@ export function toLevelDef(draft: EditorDraft): LevelDef {
     id: draft.id,
     name: draft.name,
     cells: draft.cells.map((cell) => ({ ...cell })),
-    tiles: draft.tiles.map((tile) => ({ ...tile })),
+    tiles: draft.tiles.map(({ id, q, r, dir, frozen }) => {
+      const tile: TileDef = { id, q, r, dir };
+      if (frozen) tile.frozen = true;
+      return tile;
+    }),
   };
   if (draft.walls.length > 0) {
     level.walls = draft.walls.map((wall) => ({ ...wall }));
@@ -146,7 +153,6 @@ export function addOrCycleTile(
   const existing = findTile(draft, q, r);
   if (existing) {
     existing.dir = ((existing.dir + 1) % 6) as HexDirection;
-    existing.color = colorForDirection(existing.dir);
     return;
   }
 
@@ -156,7 +162,6 @@ export function addOrCycleTile(
     q,
     r,
     dir,
-    color: colorForDirection(dir),
   };
   if (options.frozen) {
     tile.frozen = true;

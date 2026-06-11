@@ -29,22 +29,19 @@
       "id": "t1",
       "q": 0,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t2",
       "q": 1,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t3",
       "q": 0,
       "r": 1,
-      "dir": 4,
-      "color": "lavender"
+      "dir": 4
     }
   ]
 }

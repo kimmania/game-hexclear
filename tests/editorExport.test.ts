@@ -20,8 +20,8 @@ describe('editor export', () => {
         { q: 2, r: 0 },
       ],
       tiles: [
-        { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
-        { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
+        { id: 't1', q: 0, r: 0, dir: 0 },
+        { id: 't2', q: 1, r: 0, dir: 0 },
       ],
     };
     const result = prepareLevelExport(draftFromLevel(level));
@@ -35,11 +35,12 @@ describe('editor export', () => {
       { q: 1, r: 0 },
     ];
     draft.tiles = [
-      { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
-      { id: 't2', q: 1, r: 0, dir: 3, color: 'gold' },
+      { id: 't1', q: 0, r: 0, dir: 0 },
+      { id: 't2', q: 1, r: 0, dir: 3 },
     ];
     const preview = previewLevelExport(draft);
     expect(preview.json).toContain('"tiles"');
+    expect(preview.json).not.toContain('"color"');
     expect(preview.valid).toBe(true);
   });
 });

@@ -24,29 +24,25 @@
       "id": "t1",
       "q": 3,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t2",
       "q": 2,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t3",
       "q": 1,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t4",
       "q": 0,
       "r": 0,
-      "dir": 3,
-      "color": "gold"
+      "dir": 3
     }
   ],
   "par": 4

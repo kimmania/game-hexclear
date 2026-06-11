@@ -19,7 +19,6 @@ export type TileDef = {
   q: number;
   r: number;
   dir: HexDirection;
-  color: TileColor;
   /** Cannot slide while a tile occupies an adjacent hex. */
   frozen?: boolean;
 };
@@ -40,7 +39,6 @@ export type TileState = {
   q: number;
   r: number;
   dir: HexDirection;
-  color: TileColor;
   frozen?: boolean;
 };
 

@@ -7,16 +7,7 @@ Inspired by the *hex slide* puzzle genre (arrow tiles, sequencing, relaxing play
 ## How to play
 
 1. **Tap a hex tile** to slide it in the direction its arrow points.
-2. **Color matches direction** — each arrow direction always uses the same color:
-
-   | Direction | Color |
-   |-----------|-------|
-   | East | coral |
-   | Northeast | sky |
-   | Northwest | mint |
-   | West | gold |
-   | Southwest | lavender |
-   | Southeast | rose |
+2. **Color follows direction** — the UI picks a color from the arrow direction (see `src/core/tileColors.ts` to change the palette).
 
 3. The tile moves along that line until it **leaves the board**.
 4. If another tile or wall is in the way, the move is **blocked**.
@@ -67,7 +58,7 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 | **Frozen** | Toggle frozen lock on a tile |
 | **Erase** | Remove a cell and its contents |
 
-Set **Frozen** when placing tiles (color is set automatically from arrow direction). Optional **Par** is the target move count.
+Set **Frozen** when placing tiles. Optional **Par** is the target move count. Level JSON stores direction only — colors are derived at render time.
 
 Use **Generate board** to auto-fill a connected hex layout: set counts for cells, tiles (random arrows), walls, holes, and frozen tiles, then **Populate board** to replace the draft. Tweak the result by hand before export.
 

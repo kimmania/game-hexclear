@@ -2,9 +2,9 @@ import { coordKey, pixelToAxial } from '../core/hex';
 import type { HexCoord } from '../core/types';
 import type { EditorDraft, EditorTool } from './editorState';
 import { neighborCoordsForEditor } from './editorState';
+import { tileStyleForDirection } from '../core/tileColors';
 import {
   HEX_RADIUS,
-  TILE_COLORS,
   axialToPixel,
   computeViewBox,
   createDirectionArrow,
@@ -91,7 +91,7 @@ export function createEditorBoard(
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       group.setAttribute('class', 'hex-tile');
 
-      const colors = TILE_COLORS[tile.color] ?? TILE_COLORS.coral;
+      const colors = tileStyleForDirection(tile.dir);
       const body = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       body.setAttribute('points', hexPolygonPoints(x, y, HEX_RADIUS - 2));
       body.setAttribute('fill', colors.fill);

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { colorForDirection } from '../src/core/tileColors';
 import { createEmptyDraft } from '../src/editor/editorState';
 import {
   generateConnectedCells,
@@ -55,10 +54,6 @@ describe('editor populate', () => {
     expect(draft.walls).toHaveLength(1);
     expect(draft.holes).toHaveLength(1);
     expect(draft.tiles.filter((tile) => tile.frozen).length).toBe(2);
-
-    for (const tile of draft.tiles) {
-      expect(tile.color).toBe(colorForDirection(tile.dir));
-    }
 
     const occupied = new Set([
       ...draft.tiles.map((tile) => `${tile.q},${tile.r}`),

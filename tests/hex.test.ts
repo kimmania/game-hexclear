@@ -72,8 +72,8 @@ describe('board rules', () => {
       { q: 2, r: 0 },
     ],
     tiles: [
-      { id: 'a', q: 0, r: 0, dir: 0, color: 'coral' },
-      { id: 'b', q: 1, r: 0, dir: 0, color: 'sky' },
+      { id: 'a', q: 0, r: 0, dir: 0 },
+      { id: 'b', q: 1, r: 0, dir: 0 },
     ],
   };
 
@@ -111,8 +111,8 @@ describe('frozen tiles', () => {
       { q: 2, r: 0 },
     ],
     tiles: [
-      { id: 'core', q: 1, r: 0, dir: 0, color: 'sky', frozen: true },
-      { id: 'outer', q: 2, r: 0, dir: 0, color: 'coral' },
+      { id: 'core', q: 1, r: 0, dir: 0, frozen: true },
+      { id: 'outer', q: 2, r: 0, dir: 0 },
     ],
   };
 
@@ -162,8 +162,8 @@ describe('holes', () => {
     ],
     holes: [{ q: 0, r: 0 }],
     tiles: [
-      { id: 'a', q: -1, r: 0, dir: 0, color: 'coral' },
-      { id: 'b', q: 1, r: 0, dir: 3, color: 'sky' },
+      { id: 'a', q: -1, r: 0, dir: 0 },
+      { id: 'b', q: 1, r: 0, dir: 3 },
     ],
   };
 
@@ -193,24 +193,13 @@ describe('levels', () => {
       { q: 2, r: 0 },
     ],
     tiles: [
-      { id: 't1', q: 0, r: 0, dir: 0, color: 'coral' },
-      { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
+      { id: 't1', q: 0, r: 0, dir: 0 },
+      { id: 't2', q: 1, r: 0, dir: 0 },
     ],
   };
 
   it('validates level schema', () => {
     expect(() => validateLevel(level1, 1)).not.toThrow();
-  });
-
-  it('rejects tile color that does not match direction', () => {
-    const bad: LevelDef = {
-      ...level1,
-      tiles: [
-        { id: 't1', q: 0, r: 0, dir: 0, color: 'sky' },
-        { id: 't2', q: 1, r: 0, dir: 0, color: 'coral' },
-      ],
-    };
-    expect(() => validateLevel(bad, 1)).toThrow(/does not match direction/);
   });
 
   it('solves bundled level 1', () => {

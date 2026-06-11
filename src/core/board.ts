@@ -1,5 +1,4 @@
 import { AXIAL_DIRS, buildCellSet, coordKey, slidePath } from './hex';
-import { colorForDirection } from './tileColors';
 import type {
   GameState,
   LevelDef,
@@ -15,7 +14,6 @@ function copyTile(tile: TileState): TileState {
     q: tile.q,
     r: tile.r,
     dir: tile.dir,
-    color: colorForDirection(tile.dir),
     ...(tile.frozen ? { frozen: true } : {}),
   };
 }
@@ -33,7 +31,6 @@ export function createGameState(level: LevelDef): GameState {
       q: tile.q,
       r: tile.r,
       dir: tile.dir,
-      color: colorForDirection(tile.dir),
       ...(tile.frozen ? { frozen: true } : {}),
     })),
     moveCount: 0,

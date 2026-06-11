@@ -56,15 +56,6 @@ export function boardCellKeys(state: GameState): Set<string> {
   return new Set(state.cells.map(coordKey));
 }
 
-export const TILE_COLORS: Record<string, { fill: string; edge: string }> = {
-  coral: { fill: '#ff7b6b', edge: '#e05a4a' },
-  sky: { fill: '#5eb8ff', edge: '#3d9ae8' },
-  mint: { fill: '#5fd4a4', edge: '#3fb888' },
-  gold: { fill: '#ffc857', edge: '#e6a830' },
-  lavender: { fill: '#b39cff', edge: '#9178e8' },
-  rose: { fill: '#ff8fc4', edge: '#e86aa8' },
-};
-
 const ARROW_FILL = '#122033';
 const ARROW_STROKE = '#ffffff';
 

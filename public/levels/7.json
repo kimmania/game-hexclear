@@ -33,30 +33,26 @@
       "id": "t1",
       "q": -2,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t2",
       "q": 0,
       "r": 0,
       "dir": 0,
-      "color": "coral",
       "frozen": true
     },
     {
       "id": "t3",
       "q": 1,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t4",
       "q": 2,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     }
   ]
 }

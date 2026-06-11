@@ -1,8 +1,8 @@
 import { canSlideTile, isFrozenLocked } from '../core/board';
+import { tileStyleForDirection } from '../core/tileColors';
 import type { GameState, HexCoord, TileId, TileState } from '../core/types';
 import {
   HEX_RADIUS,
-  TILE_COLORS,
   axialToPixel,
   computeViewBox,
   createDirectionArrow,
@@ -88,7 +88,7 @@ export function createHexBoard(
       group.setAttribute('tabindex', '0');
       group.setAttribute('aria-label', `Hex tile pointing direction ${tile.dir}`);
 
-      const colors = TILE_COLORS[tile.color] ?? TILE_COLORS.coral;
+      const colors = tileStyleForDirection(tile.dir);
       const body = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       body.setAttribute('points', hexPolygonPoints(x, y, HEX_RADIUS - 2));
       body.setAttribute('fill', colors.fill);

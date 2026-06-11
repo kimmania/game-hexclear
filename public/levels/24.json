@@ -47,37 +47,32 @@
       "id": "t1",
       "q": -2,
       "r": 0,
-      "dir": 0,
-      "color": "coral"
+      "dir": 0
     },
     {
       "id": "t2",
       "q": 2,
       "r": 0,
-      "dir": 3,
-      "color": "gold"
+      "dir": 3
     },
     {
       "id": "t3",
       "q": 0,
       "r": 0,
       "dir": 2,
-      "color": "mint",
       "frozen": true
     },
     {
       "id": "t4",
       "q": 0,
       "r": 1,
-      "dir": 4,
-      "color": "lavender"
+      "dir": 4
     },
     {
       "id": "t5",
       "q": 0,
       "r": -1,
-      "dir": 1,
-      "color": "sky"
+      "dir": 1
     }
   ]
 }
