@@ -15,33 +15,43 @@ export async function fetchLevel(levelId: number): Promise<LevelDef> {
   return data;
 }
 
-export async function fetchLevelIndex(): Promise<number[]> {
+export type LevelSummary = { id: number; name: string; par?: number };
+export type LevelChapter = { name: string; levelIds: number[] };
+export type LevelManifest = { levels: LevelSummary[]; chapters: LevelChapter[] };
+
+/**
+ * Loads the level manifest in a single request. Supports the legacy
+ * plain-array index (just level ids) by synthesizing a single chapter.
+ */
+export async function fetchLevelManifest(): Promise<LevelManifest> {
   const response = await fetch(`${BASE}levels/index.json`);
   if (!response.ok) {
     throw new Error(`Level index not found (${response.status})`);
   }
-  const ids = (await response.json()) as number[];
-  if (!Array.isArray(ids) || ids.length === 0) {
+  const data = (await response.json()) as unknown;
+
+  if (Array.isArray(data)) {
+    const ids = data as number[];
+    if (ids.length === 0) throw new Error('Level index is empty');
+    return {
+      levels: ids.map((id) => ({ id, name: `Level ${id}` })),
+      chapters: [{ name: 'Levels', levelIds: [...ids] }],
+    };
+  }
+
+  const manifest = data as LevelManifest;
+  if (!Array.isArray(manifest.levels) || manifest.levels.length === 0) {
     throw new Error('Level index is empty');
   }
-  return ids;
-}
-
-export async function fetchLevelPar(levelId: number): Promise<number | undefined> {
-  const response = await fetch(`${BASE}levels/${levelId}.json`);
-  if (!response.ok) return undefined;
-  const data = (await response.json()) as { par?: unknown };
-  if (typeof data.par !== 'number' || !Number.isInteger(data.par) || data.par < 1) {
-    return undefined;
+  if (!Array.isArray(manifest.chapters) || manifest.chapters.length === 0) {
+    manifest.chapters = [
+      { name: 'Levels', levelIds: manifest.levels.map((level) => level.id) },
+    ];
   }
-  return data.par;
+  return manifest;
 }
 
-export async function fetchAllLevelPars(
-  levelIds: number[],
-): Promise<Map<number, number | undefined>> {
-  const entries = await Promise.all(
-    levelIds.map(async (id) => [id, await fetchLevelPar(id)] as const),
-  );
-  return new Map(entries);
+export async function fetchLevelIndex(): Promise<number[]> {
+  const manifest = await fetchLevelManifest();
+  return manifest.levels.map((level) => level.id);
 }

@@ -346,7 +346,7 @@ export async function bootstrapEditor(): Promise<void> {
   const shipHint = document.createElement('p');
   shipHint.className = 'editor-ship-hint';
   shipHint.textContent =
-    'To ship: save to public/levels/{id}.json, add the id to index.json, run npm run validate-levels.';
+    'To ship: save to public/levels/{id}.json, run npm run generate-manifest, then npm run validate-levels.';
 
   saveDraftBtn.addEventListener('click', handleSaveDraft);
   downloadBtn.addEventListener('click', handleDownload);

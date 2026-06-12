@@ -689,6 +689,90 @@ body {
   margin-bottom: 12px;
 }
 
+.modal-panel-levels {
+  max-height: min(88dvh, 640px);
+}
+
+.level-chapters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.level-chapter {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+[data-theme='light'] .level-chapter {
+  border-color: rgba(15, 32, 51, 0.12);
+  background: rgba(15, 32, 51, 0.02);
+}
+
+.level-chapter-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--btn-min);
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.level-chapter-name {
+  flex: 1;
+  font-family: var(--font-display);
+}
+
+.level-chapter-progress {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.level-chapter-chevron {
+  display: inline-block;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+.level-chapter-open .level-chapter-chevron {
+  transform: rotate(90deg);
+}
+
+.level-chapter .level-grid {
+  padding: 0 10px 10px;
+  margin-bottom: 0;
+}
+
+.level-grid[hidden] {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  #level-picker.modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  #level-picker .modal-panel {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: calc(16px + var(--safe-bottom));
+  }
+}
+
 .level-cell {
   position: relative;
   display: flex;

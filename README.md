@@ -69,7 +69,7 @@ Set **Frozen** when placing tiles. Optional **Par** is the target move count. Le
 
 Use **Generate board** to auto-fill a connected hex layout: set counts for cells, tiles (random arrows), walls, holes, and frozen tiles, then **Populate board** to replace the draft. Tweak the result by hand before export.
 
-**Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, add the id to `index.json`, run `npm run validate-levels`.
+**Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, run `npm run generate-manifest`, then `npm run validate-levels`.
 
 Edit an existing level: `?edit=1&level=5`
 
@@ -87,7 +87,7 @@ npx lighthouse http://localhost:4173/game-hexclear/ \
 
 ## Levels
 
-Levels live in `public/levels/*.json`. Add an id to `public/levels/index.json` to ship a new puzzle.
+Levels live in `public/levels/*.json`. `public/levels/index.json` is a generated manifest (level ids, names, pars, and chapter groupings) loaded by the app in a single request — never edit it by hand. To ship a new puzzle, drop `{id}.json` into the folder and run `npm run generate-manifest` (chapter names live in `scripts/manifest.ts`; levels outside named ranges are auto-grouped into packs of 15). `npm run validate-levels` fails if the manifest is stale.
 
 See `docs/MECHANICS.md` for feature reference and ideas for future level packs.
 

@@ -9,7 +9,7 @@ import {
   statusLabel,
   tilesRemaining,
 } from './core/board';
-import { fetchLevel, fetchLevelIndex, fetchAllLevelPars } from './core/levels';
+import { fetchLevel, fetchLevelManifest, type LevelChapter } from './core/levels';
 import { parseLevelJson, readClipboardText } from './core/levelImport';
 import { cloneForUndo, findHintMove } from './core/solver';
 import type { GameState, LevelDef, TileId } from './core/types';
@@ -60,6 +60,7 @@ export class HexClearApp {
   private levelDef: LevelDef | null = null;
   private levelIds: number[] = [];
   private levelPars = new Map<number, number | undefined>();
+  private levelChapters: LevelChapter[] = [];
   private progress = loadProgress();
   private settings = loadSettings();
   private loading = false;
@@ -113,8 +114,10 @@ export class HexClearApp {
     document.getElementById('level-meta')?.addEventListener('click', () => this.openLevels());
     document.body.addEventListener('pointerdown', () => primeAudio(), { once: true });
 
-    this.levelIds = await fetchLevelIndex();
-    this.levelPars = await fetchAllLevelPars(this.levelIds);
+    const manifest = await fetchLevelManifest();
+    this.levelIds = manifest.levels.map((level) => level.id);
+    this.levelPars = new Map(manifest.levels.map((level) => [level.id, level.par]));
+    this.levelChapters = manifest.chapters;
 
     const resumeLevel = findResumeLevel(this.levelIds, this.progress.highestUnlocked);
     const startLevel = resumeLevel ?? this.progress.currentLevel;
@@ -472,6 +475,7 @@ export class HexClearApp {
   private openLevels(): void {
     openLevelPicker({
       levelIds: this.levelIds,
+      chapters: this.levelChapters,
       currentLevel: this.getCurrentLevelId(),
       highestUnlocked: this.progress.highestUnlocked,
       completedLevelIds: getCompletedLevelIds(this.progress),

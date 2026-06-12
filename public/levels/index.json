@@ -1,41 +1,260 @@
-[
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-  17,
-  18,
-  19,
-  20,
-  21,
-  22,
-  23,
-  24,
-  25,
-  26,
-  27,
-  28,
-  29,
-  30,
-  31,
-  32,
-  33,
-  34,
-  35,
-  36,
-  37,
-  38,
-  39
-]
+{
+  "levels": [
+    {
+      "id": 1,
+      "name": "Warm up",
+      "par": 2
+    },
+    {
+      "id": 2,
+      "name": "Right first",
+      "par": 3
+    },
+    {
+      "id": 3,
+      "name": "Step up",
+      "par": 3
+    },
+    {
+      "id": 4,
+      "name": "Two rows",
+      "par": 5
+    },
+    {
+      "id": 5,
+      "name": "Hex ring",
+      "par": 6
+    },
+    {
+      "id": 6,
+      "name": "Ice block",
+      "par": 3
+    },
+    {
+      "id": 7,
+      "name": "Ice tunnel",
+      "par": 4
+    },
+    {
+      "id": 8,
+      "name": "West first",
+      "par": 4
+    },
+    {
+      "id": 9,
+      "name": "Triangle",
+      "par": 6
+    },
+    {
+      "id": 10,
+      "name": "Pinwheel",
+      "par": 7
+    },
+    {
+      "id": 11,
+      "name": "Bulkhead",
+      "par": 6
+    },
+    {
+      "id": 12,
+      "name": "Procession",
+      "par": 5
+    },
+    {
+      "id": 13,
+      "name": "Beehive",
+      "par": 7
+    },
+    {
+      "id": 14,
+      "name": "Switchback",
+      "par": 5
+    },
+    {
+      "id": 15,
+      "name": "Fortress",
+      "par": 8
+    },
+    {
+      "id": 16,
+      "name": "Weave",
+      "par": 7
+    },
+    {
+      "id": 17,
+      "name": "Grand clear",
+      "par": 10
+    },
+    {
+      "id": 18,
+      "name": "Pit fall",
+      "par": 6
+    },
+    {
+      "id": 19,
+      "name": "Ice lock",
+      "par": 7
+    },
+    {
+      "id": 20,
+      "name": "Queue up",
+      "par": 3
+    },
+    {
+      "id": 21,
+      "name": "Under par",
+      "par": 3
+    },
+    {
+      "id": 22,
+      "name": "Master mix",
+      "par": 4
+    },
+    {
+      "id": 23,
+      "name": "Priority lane",
+      "par": 8
+    },
+    {
+      "id": 24,
+      "name": "Twin pits",
+      "par": 5
+    },
+    {
+      "id": 25,
+      "name": "Fortress gate",
+      "par": 8
+    },
+    {
+      "id": 26,
+      "name": "Gauntlet",
+      "par": 7
+    },
+    {
+      "id": 27,
+      "name": "Cascade",
+      "par": 10
+    },
+    {
+      "id": 28,
+      "name": "Crystal web",
+      "par": 12
+    },
+    {
+      "id": 29,
+      "name": "Grand tempest",
+      "par": 10
+    },
+    {
+      "id": 30,
+      "name": "Ice crown",
+      "par": 15
+    },
+    {
+      "id": 31,
+      "name": "One way",
+      "par": 2
+    },
+    {
+      "id": 32,
+      "name": "Turnstile",
+      "par": 2
+    },
+    {
+      "id": 33,
+      "name": "Stick together",
+      "par": 2
+    },
+    {
+      "id": 34,
+      "name": "Portal hop",
+      "par": 2
+    },
+    {
+      "id": 35,
+      "name": "Flip the gate",
+      "par": 2
+    },
+    {
+      "id": 36,
+      "name": "Crumbling bridge",
+      "par": 3
+    },
+    {
+      "id": 37,
+      "name": "Push through",
+      "par": 2
+    },
+    {
+      "id": 38,
+      "name": "Split paths",
+      "par": 2
+    },
+    {
+      "id": 39,
+      "name": "Magnetic pull",
+      "par": 2
+    }
+  ],
+  "chapters": [
+    {
+      "name": "First steps",
+      "levelIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "Rising challenge",
+      "levelIds": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ]
+    },
+    {
+      "name": "Master boards",
+      "levelIds": [
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ]
+    },
+    {
+      "name": "New mechanics",
+      "levelIds": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ]
+    }
+  ]
+}
