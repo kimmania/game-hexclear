@@ -367,6 +367,7 @@ export class HexClearApp {
 
     const remaining = tilesRemaining(this.state);
     if (isWin(this.state)) {
+      this.board.celebrateWin();
       setHint(this.isImportedLevel() ? 'Imported level cleared!' : 'Board cleared!');
       playSound('win');
       pulseHaptic([10, 30, 10, 30, 20]);

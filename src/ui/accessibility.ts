@@ -7,9 +7,17 @@ export function applyColorblindClass(mode: ColorblindMode): void {
   document.documentElement.dataset.colorblind = mode;
 }
 
+export function applyThemeAttr(theme: GameSettings['theme']): void {
+  document.documentElement.dataset.theme = theme;
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', theme === 'light' ? '#e9eef6' : '#1a2332');
+}
+
 export function applySettingsClasses(settings: GameSettings): void {
   applyMotionClass(settings.reducedMotion);
   applyColorblindClass(settings.colorblindMode);
+  applyThemeAttr(settings.theme);
 }
 
 export function applyBoardZoom(cellCount: number, boardZoom: GameSettings['boardZoom']): void {

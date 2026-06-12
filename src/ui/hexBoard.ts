@@ -30,6 +30,16 @@ export type BoardRenderOptions = {
   colorblindMode?: ColorblindMode;
 };
 
+/** Accelerating curve — tiles launch slow then speed up, reading as a flick. */
+const easeInQuad = (t: number): number => t * t;
+
+/** Spring curve with slight overshoot, used for bounce-back returns. */
+const easeOutBack = (t: number): number => {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+};
+
 function appendTileMarkers(
   group: SVGGElement,
   x: number,
@@ -79,6 +89,7 @@ export type HexBoard = {
   render: (state: GameState, options?: BoardRenderOptions) => void;
   animateSlides: (state: GameState, animations: SlideAnimation[]) => Promise<void>;
   animateBounce: (state: GameState, animations: SlideAnimation[]) => Promise<void>;
+  celebrateWin: () => void;
   flashBlocked: (tileId: TileId) => void;
   highlightTile: (tileId: TileId | null) => void;
   focusTile: (tileId: TileId | null) => void;
@@ -109,6 +120,9 @@ export function createHexBoard(
   let tilePositions = new Map<TileId, { x: number; y: number; q: number; r: number }>();
   let latestState: GameState | null = null;
   let latestRenderOptions: BoardRenderOptions = {};
+  /** Crumbled cells already shown, so the collapse animation only plays once. */
+  let seenCrumbledKeys = new Set<string>();
+  let seenLevelId: number | null = null;
 
   function tileAriaLabel(tile: TileState, state: GameState, slideable: boolean): string {
     const direction = DIRECTION_LABELS[tile.dir];
@@ -230,6 +244,12 @@ export function createHexBoard(
     latestRenderOptions = options;
     const colorblindMode = options.colorblindMode ?? 'off';
 
+    svg.classList.remove('hex-board-won');
+    if (state.levelId !== seenLevelId) {
+      seenLevelId = state.levelId;
+      seenCrumbledKeys = new Set();
+    }
+
     svg.setAttribute('viewBox', computeViewBox(state.cells));
     svg.replaceChildren();
 
@@ -247,22 +267,34 @@ export function createHexBoard(
     bg.setAttribute('class', 'hex-cells');
     svg.appendChild(bg);
 
-    for (const cell of state.cells) {
+    state.cells.forEach((cell, cellIndex) => {
       const { x, y } = axialToPixel(cell.q, cell.r);
       const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       poly.setAttribute('points', hexPolygonPoints(x, y));
+      poly.style.setProperty('--cell-i', String(cellIndex));
       const key = coordKey(cell);
       const isHole = state.holes.some((hole) => hole.q === cell.q && hole.r === cell.r);
       const isCrumbled = state.crumbledKeys.includes(key);
       if (isCrumbled) {
         poly.setAttribute('class', 'hex-cell hex-cell-crumbled');
+        if (!seenCrumbledKeys.has(key)) {
+          poly.classList.add('hex-cell-crumble-fresh');
+        }
       } else if (isHole) {
         poly.setAttribute('class', 'hex-hole');
       } else {
         poly.setAttribute('class', 'hex-cell');
       }
       bg.appendChild(poly);
-    }
+
+      if (isHole && !isCrumbled) {
+        const inner = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        inner.setAttribute('points', hexPolygonPoints(x, y, HEX_RADIUS - 7));
+        inner.setAttribute('class', 'hex-hole-inner');
+        bg.appendChild(inner);
+      }
+    });
+    seenCrumbledKeys = new Set(state.crumbledKeys);
 
     for (const wall of state.walls) {
       const { x, y } = axialToPixel(wall.q, wall.r);
@@ -403,50 +435,128 @@ export function createHexBoard(
     window.setTimeout(() => tile?.classList.remove('hex-tile-shake'), 400);
   }
 
-  function animateOneSlide(state: GameState, tileId: TileId, path: HexCoord[]): Promise<void> {
-    if (document.documentElement.classList.contains('reduce-motion') || path.length < 2) {
-      return Promise.resolve();
-    }
+  function pathToPoints(path: HexCoord[]): Array<{ x: number; y: number }> {
+    return path.map((coord) => axialToPixel(coord.q, coord.r));
+  }
 
-    const tileEl = svg.querySelector(`[data-tile-id="${tileId}"]`) as SVGGElement | null;
-    if (!tileEl || path.length < 2) {
-      return Promise.resolve();
-    }
+  /**
+   * Glide a tile along a polyline of pixel points with an easing curve.
+   * Teleporter hops (non-adjacent segments) are treated as instant jumps.
+   * Eased progress outside [0,1] extrapolates past the ends (spring overshoot).
+   */
+  function animateAlongPath(
+    tileEl: SVGGElement,
+    points: Array<{ x: number; y: number }>,
+    duration: number,
+    easing: (t: number) => number,
+  ): Promise<void> {
+    if (points.length < 2) return Promise.resolve();
 
-    const tile = state.tiles.find((entry) => entry.id === tileId);
-    if (!tile) {
-      return Promise.resolve();
+    const jumpThreshold = HEX_RADIUS * 2.2;
+    const origin = points[0]!;
+    const lengths: number[] = [0];
+    let total = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      const raw = Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y);
+      total += raw > jumpThreshold ? 0 : raw;
+      lengths.push(total);
     }
+    if (total === 0) return Promise.resolve();
 
-    const origin = axialToPixel(path[0].q, path[0].r);
+    const pointAt = (dist: number): { x: number; y: number } => {
+      if (dist <= 0) {
+        const a = points[0]!;
+        const b = points[1]!;
+        const seg = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        const k = dist / seg;
+        return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+      }
+      if (dist >= total) {
+        const a = points[points.length - 2]!;
+        const b = points[points.length - 1]!;
+        const seg = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        const k = (dist - total) / seg;
+        return { x: b.x + (b.x - a.x) * k, y: b.y + (b.y - a.y) * k };
+      }
+      let i = 1;
+      while (lengths[i]! < dist) i += 1;
+      const segLen = lengths[i]! - lengths[i - 1]! || 1;
+      const k = (dist - lengths[i - 1]!) / segLen;
+      const a = points[i - 1]!;
+      const b = points[i]!;
+      return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+    };
 
     return new Promise((resolve) => {
-      let step = 0;
-      const tick = (): void => {
-        step += 1;
-        if (step >= path.length) {
-          tileEl.removeAttribute('transform');
-          resolve();
-          return;
-        }
-
-        const coord = path[step];
-        const { x, y } = axialToPixel(coord.q, coord.r);
+      const start = performance.now();
+      const frame = (now: number): void => {
+        const t = Math.min(1, (now - start) / duration);
+        const { x, y } = pointAt(easing(t) * total);
         tileEl.setAttribute('transform', `translate(${x - origin.x} ${y - origin.y})`);
-        window.setTimeout(tick, 65);
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          resolve();
+        }
       };
-
-      tick();
+      requestAnimationFrame(frame);
     });
   }
 
-  function animateSlides(state: GameState, animations: SlideAnimation[]): Promise<void> {
+  /** Shrink and fade a tile at its final path position so clears read as falling away. */
+  function animateTileClear(
+    tileEl: SVGGElement,
+    origin: { x: number; y: number },
+    final: { x: number; y: number },
+    duration = 190,
+  ): Promise<void> {
+    const dx = final.x - origin.x;
+    const dy = final.y - origin.y;
+
+    return new Promise((resolve) => {
+      const start = performance.now();
+      const frame = (now: number): void => {
+        const t = Math.min(1, (now - start) / duration);
+        const p = easeInQuad(t);
+        const scale = 1 - 0.75 * p;
+        tileEl.setAttribute(
+          'transform',
+          `translate(${dx} ${dy}) translate(${origin.x} ${origin.y}) scale(${scale}) translate(${-origin.x} ${-origin.y})`,
+        );
+        tileEl.style.opacity = String(1 - p);
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          resolve();
+        }
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function animateSlideOut(tileId: TileId, path: HexCoord[], clear: boolean): Promise<void> {
+    if (path.length < 2) return;
+    const tileEl = svg.querySelector(`[data-tile-id="${tileId}"]`) as SVGGElement | null;
+    if (!tileEl) return;
+
+    tileEl.classList.add('hex-tile-sliding');
+    const points = pathToPoints(path);
+    const duration = Math.min(460, Math.max(170, (points.length - 1) * 80));
+    await animateAlongPath(tileEl, points, duration, easeInQuad);
+    if (clear) {
+      await animateTileClear(tileEl, points[0]!, points[points.length - 1]!);
+    }
+  }
+
+  function animateSlides(_state: GameState, animations: SlideAnimation[]): Promise<void> {
     if (document.documentElement.classList.contains('reduce-motion')) {
       return Promise.resolve();
     }
 
     animating = true;
-    return Promise.all(animations.map((entry) => animateOneSlide(state, entry.tileId, entry.path)))
+    return Promise.all(
+      animations.map((entry) => animateSlideOut(entry.tileId, entry.path, true)),
+    )
       .then(() => {
         animating = false;
         if (latestState) {
@@ -458,7 +568,7 @@ export function createHexBoard(
       });
   }
 
-  function animateBounce(state: GameState, animations: SlideAnimation[]): Promise<void> {
+  function animateBounce(_state: GameState, animations: SlideAnimation[]): Promise<void> {
     if (document.documentElement.classList.contains('reduce-motion')) {
       return Promise.resolve();
     }
@@ -467,8 +577,16 @@ export function createHexBoard(
     return Promise.all(
       animations.map(async (entry) => {
         if (entry.path.length < 2) return;
-        await animateOneSlide(state, entry.tileId, entry.path);
-        await animateOneSlide(state, entry.tileId, [...entry.path].reverse());
+        const tileEl = svg.querySelector(`[data-tile-id="${entry.tileId}"]`) as SVGGElement | null;
+        if (!tileEl) return;
+
+        tileEl.classList.add('hex-tile-sliding');
+        const points = pathToPoints(entry.path);
+        const outDuration = Math.min(380, Math.max(150, (points.length - 1) * 70));
+        await animateAlongPath(tileEl, points, outDuration, easeInQuad);
+        await animateAlongPath(tileEl, [...points].reverse(), outDuration + 120, easeOutBack);
+        tileEl.removeAttribute('transform');
+        tileEl.classList.remove('hex-tile-sliding');
       }),
     )
       .then(() => {
@@ -482,11 +600,16 @@ export function createHexBoard(
       });
   }
 
+  function celebrateWin(): void {
+    svg.classList.add('hex-board-won');
+  }
+
   return {
     svg,
     render,
     animateSlides,
     animateBounce,
+    celebrateWin,
     flashBlocked,
     highlightTile,
     focusTile,

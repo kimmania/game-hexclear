@@ -1,5 +1,5 @@
 import type { ColorblindMode } from '../core/tileColors';
-import type { BoardZoomMode, GameSettings } from '../game/settings';
+import type { BoardZoomMode, GameSettings, ThemeMode } from '../game/settings';
 
 export type SettingsPanelOptions = {
   settings: GameSettings;
@@ -48,6 +48,17 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
     (checked) => options.onChange({ ...options.settings, undo: checked }),
   );
 
+  const themeRow = createSelectRow<ThemeMode>(
+    'theme-mode',
+    'Theme',
+    options.settings.theme,
+    [
+      { value: 'dark', label: 'Dark' },
+      { value: 'light', label: 'Light' },
+    ],
+    (value) => options.onChange({ ...options.settings, theme: value }),
+  );
+
   const colorblindRow = createSelectRow<ColorblindMode>(
     'colorblind-mode',
     'Colorblind mode',
@@ -93,6 +104,7 @@ export function openSettingsPanel(options: SettingsPanelOptions): void {
 
   panel.append(
     title,
+    themeRow,
     soundRow,
     motionRow,
     undoRow,

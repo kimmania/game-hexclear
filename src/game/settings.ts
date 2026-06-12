@@ -2,6 +2,8 @@ import { normalizeColorblindMode, type ColorblindMode } from '../core/tileColors
 
 export type BoardZoomMode = 'auto' | 'off';
 
+export type ThemeMode = 'dark' | 'light';
+
 export type GameSettings = {
   sound: boolean;
   reducedMotion: boolean;
@@ -10,6 +12,7 @@ export type GameSettings = {
   colorblindMode: ColorblindMode;
   /** Scale up dense boards for easier tapping. */
   boardZoom: BoardZoomMode;
+  theme: ThemeMode;
 };
 
 const STORAGE_KEY = 'hexclear-settings';
@@ -20,6 +23,7 @@ const DEFAULTS: GameSettings = {
   undo: false,
   colorblindMode: 'off',
   boardZoom: 'auto',
+  theme: 'dark',
 };
 
 function parseColorblindMode(value: unknown): ColorblindMode {
@@ -28,6 +32,10 @@ function parseColorblindMode(value: unknown): ColorblindMode {
 
 function parseBoardZoom(value: unknown): BoardZoomMode {
   return value === 'off' ? 'off' : 'auto';
+}
+
+function parseTheme(value: unknown): ThemeMode {
+  return value === 'light' ? 'light' : 'dark';
 }
 
 export function loadSettings(): GameSettings {
@@ -41,6 +49,7 @@ export function loadSettings(): GameSettings {
       undo: parsed.undo ?? DEFAULTS.undo,
       colorblindMode: parseColorblindMode(parsed.colorblindMode),
       boardZoom: parseBoardZoom(parsed.boardZoom),
+      theme: parseTheme(parsed.theme),
     };
   } catch {
     return { ...DEFAULTS };
