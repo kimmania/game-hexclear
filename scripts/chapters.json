@@ -1,0 +1,6 @@
+[
+  { "name": "First steps", "from": 1, "to": 10 },
+  { "name": "Rising challenge", "from": 11, "to": 20 },
+  { "name": "Master boards", "from": 21, "to": 30 },
+  { "name": "New mechanics", "from": 31, "to": 39 }
+]

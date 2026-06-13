@@ -176,15 +176,15 @@ export async function bootstrapEditor(): Promise<void> {
     wallCount: 0,
     holeCount: 0,
     frozenCount: 0,
+    crumblingCount: 0,
+    rotatorCount: 0,
+    linkPairCount: 0,
+    portalPairCount: 0,
+    gateCount: 0,
+    crateCount: 0,
   };
 
-  const generateInputs: Record<keyof PopulateParams, HTMLInputElement> = {
-    cellCount: document.createElement('input'),
-    tileCount: document.createElement('input'),
-    wallCount: document.createElement('input'),
-    holeCount: document.createElement('input'),
-    frozenCount: document.createElement('input'),
-  };
+  const generateInputs = {} as Record<keyof PopulateParams, HTMLInputElement>;
 
   const generateLabels: Record<keyof PopulateParams, string> = {
     cellCount: 'Cells',
@@ -192,15 +192,22 @@ export async function bootstrapEditor(): Promise<void> {
     wallCount: 'Walls',
     holeCount: 'Holes',
     frozenCount: 'Frozen',
+    crumblingCount: 'Crumble',
+    rotatorCount: 'Rotators',
+    linkPairCount: 'Links',
+    portalPairCount: 'Portals',
+    gateCount: 'Gates',
+    crateCount: 'Crates',
   };
 
   for (const key of Object.keys(generateDefaults) as (keyof PopulateParams)[]) {
     const label = document.createElement('label');
     label.className = 'editor-generate-label';
 
-    const input = generateInputs[key];
+    const input = document.createElement('input');
+    generateInputs[key] = input;
     input.type = 'number';
-    input.min = key === 'cellCount' ? '1' : '0';
+    input.min = key === 'cellCount' || key === 'tileCount' ? '1' : '0';
     input.className = 'editor-field';
     input.value = String(generateDefaults[key]);
     input.setAttribute('aria-label', generateLabels[key]);
@@ -221,6 +228,12 @@ export async function bootstrapEditor(): Promise<void> {
       wallCount: Math.floor(Number(generateInputs.wallCount.value)) || 0,
       holeCount: Math.floor(Number(generateInputs.holeCount.value)) || 0,
       frozenCount: Math.floor(Number(generateInputs.frozenCount.value)) || 0,
+      crumblingCount: Math.floor(Number(generateInputs.crumblingCount.value)) || 0,
+      rotatorCount: Math.floor(Number(generateInputs.rotatorCount.value)) || 0,
+      linkPairCount: Math.floor(Number(generateInputs.linkPairCount.value)) || 0,
+      portalPairCount: Math.floor(Number(generateInputs.portalPairCount.value)) || 0,
+      gateCount: Math.floor(Number(generateInputs.gateCount.value)) || 0,
+      crateCount: Math.floor(Number(generateInputs.crateCount.value)) || 0,
     };
 
     const check = validatePopulateParams(params);

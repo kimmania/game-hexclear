@@ -45,6 +45,9 @@ Open the URL from the terminal (usually `http://localhost:5174/game-hexclear/`).
 | `npm run preview` | Preview production build |
 | `npm test` | Run unit tests |
 | `npm run validate-levels` | BFS solvability check for every level |
+| `npm run generate-manifest` | Regenerate `public/levels/index.json` from level files |
+| `npm run generate-levels` | Batch-generate solvable levels (see `--help`) |
+| `npm run generate-level-previews` | PNG/SVG snapshots of every level for review |
 | `npm run generate-icons` | Regenerate PNG icons from `public/icons/icon.svg` |
 | `npm run lighthouse` | Build + preview, then run Lighthouse (mobile) |
 | Level editor | Add `?edit=1` or `#edit` to the game URL (e.g. `?edit=1&level=16`) |
@@ -67,7 +70,7 @@ Open **`/game-hexclear/?edit=1`** in the browser.
 
 Set **Frozen** when placing tiles. Optional **Par** is the target move count. Level JSON stores direction only — colors are derived at render time.
 
-Use **Generate board** to auto-fill a connected hex layout: set counts for cells, tiles (random arrows), walls, holes, and frozen tiles, then **Populate board** to replace the draft. Tweak the result by hand before export.
+Use **Generate board** to auto-fill a connected hex layout: set counts for cells, tiles (random arrows), walls, holes, frozen tiles, and optional advanced features (crumble, rotators, linked pairs, portals, gates, crates), then **Populate board** to replace the draft. Tweak the result by hand before export.
 
 **Download .json** or **Copy JSON** runs schema + solvability checks first. To ship a level: save to `public/levels/{id}.json`, run `npm run generate-manifest`, then `npm run validate-levels`.
 
@@ -87,7 +90,16 @@ npx lighthouse http://localhost:4173/game-hexclear/ \
 
 ## Levels
 
-Levels live in `public/levels/*.json`. `public/levels/index.json` is a generated manifest (level ids, names, pars, and chapter groupings) loaded by the app in a single request — never edit it by hand. To ship a new puzzle, drop `{id}.json` into the folder and run `npm run generate-manifest` (chapter names live in `scripts/manifest.ts`; levels outside named ranges are auto-grouped into packs of 15). `npm run validate-levels` fails if the manifest is stale.
+Levels live in `public/levels/*.json`. `public/levels/index.json` is a generated manifest (level ids, names, pars, and chapter groupings) loaded by the app in a single request — never edit it by hand. To ship a new puzzle, drop `{id}.json` into the folder and run `npm run generate-manifest` (chapter names live in `scripts/chapters.json`; levels outside named ranges are auto-grouped into packs of 15). `npm run validate-levels` fails if the manifest is stale.
+
+**Batch-generate** solvable levels from the command line (same cell/tile/wall/hole/frozen counts as the editor's *Generate board*):
+
+```bash
+npm run generate-levels -- --count 5 --start-id 40 --chapter "Expert pack" \
+  --cells 8-12 --tiles 4-6 --holes 0-1 --frozen 0-1 --seed 42
+```
+
+Use `--dry-run` to preview without writing files. Run `npm run generate-levels -- --help` for all options.
 
 To review level layouts quickly, run `npm run generate-level-previews` — this writes PNG/SVG snapshots of every level's **initial board state** to `previews/` and opens a browsable gallery at `previews/index.html`. Pass level ids to regenerate only those levels, e.g. `npm run generate-level-previews -- 36 37`.
 

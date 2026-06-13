@@ -22,6 +22,12 @@ describe('editor populate', () => {
       wallCount: 1,
       holeCount: 1,
       frozenCount: 0,
+      crumblingCount: 0,
+      rotatorCount: 0,
+      linkPairCount: 0,
+      portalPairCount: 0,
+      gateCount: 0,
+      crateCount: 0,
     }).ok).toBe(false);
   });
 
@@ -44,6 +50,12 @@ describe('editor populate', () => {
         wallCount: 1,
         holeCount: 1,
         frozenCount: 2,
+        crumblingCount: 0,
+        rotatorCount: 0,
+        linkPairCount: 0,
+        portalPairCount: 0,
+        gateCount: 0,
+        crateCount: 0,
       },
       random,
     );
@@ -61,5 +73,34 @@ describe('editor populate', () => {
       ...draft.holes.map((hole) => `${hole.q},${hole.r}`),
     ]);
     expect(occupied.size).toBe(6);
+  });
+
+  it('places advanced mechanics on empty cells', () => {
+    const draft = createEmptyDraft();
+    const result = populateDraft(
+      draft,
+      {
+        cellCount: 12,
+        tileCount: 4,
+        wallCount: 0,
+        holeCount: 0,
+        frozenCount: 0,
+        crumblingCount: 1,
+        rotatorCount: 1,
+        linkPairCount: 1,
+        portalPairCount: 1,
+        gateCount: 1,
+        crateCount: 1,
+      },
+      seededRandom(11),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(draft.crumbling).toHaveLength(1);
+    expect(draft.rotators).toHaveLength(1);
+    expect(draft.teleporters).toHaveLength(2);
+    expect(draft.toggleGates).toHaveLength(1);
+    expect(draft.crates).toHaveLength(1);
+    expect(draft.tiles.filter((tile) => tile.linked)).toHaveLength(2);
   });
 });

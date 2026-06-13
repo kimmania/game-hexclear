@@ -11,6 +11,7 @@
     "validate-levels": "tsx scripts/validate-levels.ts",
     "generate-manifest": "tsx scripts/generate-manifest.ts",
     "generate-level-previews": "tsx scripts/generate-level-previews.ts",
+    "generate-levels": "tsx scripts/generate-levels.ts",
     "generate-icons": "tsx scripts/generate-icons.ts",
     "lighthouse": "npm run build && vite preview --port 4173 --strictPort"
   },
