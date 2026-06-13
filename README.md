@@ -89,6 +89,8 @@ npx lighthouse http://localhost:4173/game-hexclear/ \
 
 Levels live in `public/levels/*.json`. `public/levels/index.json` is a generated manifest (level ids, names, pars, and chapter groupings) loaded by the app in a single request — never edit it by hand. To ship a new puzzle, drop `{id}.json` into the folder and run `npm run generate-manifest` (chapter names live in `scripts/manifest.ts`; levels outside named ranges are auto-grouped into packs of 15). `npm run validate-levels` fails if the manifest is stale.
 
+To review level layouts quickly, run `npm run generate-level-previews` — this writes PNG/SVG snapshots of every level's **initial board state** to `previews/` and opens a browsable gallery at `previews/index.html`. Pass level ids to regenerate only those levels, e.g. `npm run generate-level-previews -- 36 37`.
+
 See `docs/MECHANICS.md` for feature reference and ideas for future level packs.
 
 ## GitHub Pages

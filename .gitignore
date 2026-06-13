@@ -1,5 +1,6 @@
 node_modules
 dist
+previews
 .DS_Store
 *.local
 lighthouse-report.json
